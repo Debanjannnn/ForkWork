@@ -60,7 +60,7 @@ export default function Dashboard() {
       icon: Trophy,
       features: ["Upfront payment guarantee", "Skill-based competition", "Direct rewards"],
       status: "5 Active",
-      href: "dashboard/bounty",
+      href: "dashboard/bounties",
       gradient: "from-[#E23E6B] to-[#cc4368]",
     },
     {

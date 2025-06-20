@@ -208,7 +208,7 @@ function BountyCard({ bountyId, index }: BountyCardProps) {
         </div>
 
         {/* Action Button */}
-        <Link href={`/bounties/${bounty.id}`}>
+        <Link href={`/dashboard/bounties/${bounty.id}`}>
           <motion.div
             className="flex items-center justify-between p-3 bg-white/5 rounded-2xl border border-white/10 hover:border-[#E23E6B]/50 transition-all duration-300 group/button"
             whileHover={{ x: 5 }}
@@ -225,7 +225,7 @@ function BountyCard({ bountyId, index }: BountyCardProps) {
   )
 }
 
-export function Bounties() {
+function Bounties() {
   const { address, isConnected } = useWallet()
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedCategory, setSelectedCategory] = useState<string>("all")
@@ -327,7 +327,7 @@ export function Bounties() {
             </motion.p>
           </div>
 
-          <Link href="/bounties/post">
+          <Link href="/dashboard/bounties/post">
             <motion.button
               className="flex items-center space-x-3 px-8 py-4 bg-gradient-to-r from-[#E23E6B] to-[#cc4368] text-white font-medium rounded-3xl hover:from-[#cc4368] hover:to-[#E23E6B] transition-all duration-300 shadow-lg hover:shadow-xl mt-6 lg:mt-0"
               whileHover={{ scale: 1.05 }}
@@ -451,7 +451,7 @@ export function Bounties() {
             <Trophy className="w-16 h-16 text-gray-500 mx-auto mb-4" />
             <h3 className={cn("text-xl font-thin mb-2", poppins.className)}>No Bounties Found</h3>
             <p className="text-gray-400 mb-6">Be the first to create a bounty on the platform!</p>
-            <Link href="/dashboard/bounty/create">
+            <Link href="dashboard/bounties/create">
               <motion.button
                 className="px-6 py-3 bg-gradient-to-r from-[#E23E6B] to-[#cc4368] rounded-2xl font-medium hover:from-[#cc4368] hover:to-[#E23E6B] transition-all duration-300"
                 whileHover={{ scale: 1.05 }}

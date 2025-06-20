@@ -1,8 +1,7 @@
 "use client"
 
-import React from "react"
-
-import { useState } from "react"
+import type React from "react"
+import { useState, useEffect } from "react"
 import { motion, type Variants } from "framer-motion"
 import { Poppins } from "next/font/google"
 import { cn } from "@/lib/utils"
@@ -26,6 +25,8 @@ import {
   CheckCircle,
   AlertCircle,
   Loader2,
+  Info,
+  ExternalLink,
 } from "lucide-react"
 import Link from "next/link"
 import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from "wagmi"
@@ -42,12 +43,54 @@ const poppins = Poppins({
 })
 
 const categories = [
-  { value: 0, label: "Content", icon: FileText, emoji: "📝", description: "Writing, documentation, tutorials" },
-  { value: 1, label: "Development", icon: Code, emoji: "🛠️", description: "Coding, smart contracts, apps" },
-  { value: 2, label: "Design", icon: Palette, emoji: "🎨", description: "UI/UX, graphics, branding" },
-  { value: 3, label: "Research", icon: Search, emoji: "🔍", description: "Analysis, reports, studies" },
-  { value: 4, label: "Marketing", icon: Megaphone, emoji: "📢", description: "Promotion, social media, campaigns" },
-  { value: 5, label: "Other", icon: MoreHorizontal, emoji: "⚡", description: "Miscellaneous tasks" },
+  {
+    value: 0,
+    label: "Content",
+    icon: FileText,
+    emoji: "📝",
+    description: "Writing, documentation, tutorials",
+    color: "from-blue-500 to-blue-700",
+  },
+  {
+    value: 1,
+    label: "Development",
+    icon: Code,
+    emoji: "🛠️",
+    description: "Coding, smart contracts, apps",
+    color: "from-green-500 to-green-700",
+  },
+  {
+    value: 2,
+    label: "Design",
+    icon: Palette,
+    emoji: "🎨",
+    description: "UI/UX, graphics, branding",
+    color: "from-purple-500 to-purple-700",
+  },
+  {
+    value: 3,
+    label: "Research",
+    icon: Search,
+    emoji: "🔍",
+    description: "Analysis, reports, studies",
+    color: "from-yellow-500 to-yellow-700",
+  },
+  {
+    value: 4,
+    label: "Marketing",
+    icon: Megaphone,
+    emoji: "📢",
+    description: "Promotion, social media, campaigns",
+    color: "from-pink-500 to-pink-700",
+  },
+  {
+    value: 5,
+    label: "Other",
+    icon: MoreHorizontal,
+    emoji: "⚡",
+    description: "Miscellaneous tasks",
+    color: "from-gray-500 to-gray-700",
+  },
 ]
 
 interface FormData {
@@ -69,6 +112,7 @@ enum CreateStep {
 export default function PostBounty() {
   const { address, isConnected } = useWallet()
   const [currentStep, setCurrentStep] = useState<CreateStep>(CreateStep.FORM)
+  const [showPreview, setShowPreview] = useState(false)
   const [formData, setFormData] = useState<FormData>({
     name: "",
     description: "",
@@ -125,6 +169,7 @@ export default function PostBounty() {
     address: USDT_TOKEN_ADDRESS,
     abi: ERC20_ABI,
     functionName: "balanceOf",
+    // @ts-ignore
     args: [address || "0x0"],
     query: { enabled: !!address },
   })
@@ -133,6 +178,7 @@ export default function PostBounty() {
     address: USDT_TOKEN_ADDRESS,
     abi: ERC20_ABI,
     functionName: "allowance",
+    // @ts-ignore
     args: [address || "0x0", BOUNTY_CONTRACT_ADDRESS],
     query: { enabled: !!address },
   })
@@ -211,6 +257,7 @@ export default function PostBounty() {
       setIpfsUri(uri)
 
       const rewardAmount = parseUnits(formData.totalReward, 6)
+      // @ts-ignore
       const currentAllowance = allowance || 0n
 
       if (currentAllowance < rewardAmount) {
@@ -245,7 +292,7 @@ export default function PostBounty() {
   }
 
   // Handle approval success
-  React.useEffect(() => {
+  useEffect(() => {
     if (isApproveSuccess && currentStep === CreateStep.APPROVE) {
       setCurrentStep(CreateStep.CREATE)
       refetchAllowance()
@@ -254,21 +301,21 @@ export default function PostBounty() {
   }, [isApproveSuccess, currentStep])
 
   // Handle create success
-  React.useEffect(() => {
+  useEffect(() => {
     if (isCreateSuccess && currentStep === CreateStep.CREATE) {
       setCurrentStep(CreateStep.SUCCESS)
     }
   }, [isCreateSuccess, currentStep])
 
   // Handle errors
-  React.useEffect(() => {
+  useEffect(() => {
     if (approveError) {
       setError(`Approval failed: ${approveError.message}`)
       setCurrentStep(CreateStep.FORM)
     }
   }, [approveError])
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (createError) {
       setError(`Bounty creation failed: ${createError.message}`)
       setCurrentStep(CreateStep.FORM)
@@ -314,25 +361,40 @@ export default function PostBounty() {
     return (
       <div className="prose prose-invert prose-sm max-w-none">
         {markdown.split("\n").map((line, i) => {
+          if (line.startsWith("# ")) {
+            return (
+              <h1 key={i} className="text-2xl font-bold mt-6 mb-3 text-white">
+                {line.slice(2)}
+              </h1>
+            )
+          }
           if (line.startsWith("## ")) {
             return (
-              <h2 key={i} className="text-lg font-bold mt-4 mb-2 text-white">
+              <h2 key={i} className="text-xl font-bold mt-5 mb-3 text-gray-200">
                 {line.slice(3)}
               </h2>
             )
           }
           if (line.startsWith("### ")) {
             return (
-              <h3 key={i} className="text-md font-semibold mt-3 mb-1 text-gray-200">
+              <h3 key={i} className="text-lg font-semibold mt-4 mb-2 text-gray-300">
                 {line.slice(4)}
               </h3>
             )
           }
           if (line.startsWith("- [ ] ")) {
             return (
-              <div key={i} className="flex items-center gap-2 my-1">
+              <div key={i} className="flex items-center gap-2 my-2">
                 <input type="checkbox" disabled className="rounded bg-white/10 border-white/20" />
                 <span className="text-gray-300">{line.slice(6)}</span>
+              </div>
+            )
+          }
+          if (line.startsWith("- [x] ")) {
+            return (
+              <div key={i} className="flex items-center gap-2 my-2">
+                <input type="checkbox" checked disabled className="rounded bg-green-500 border-green-500" />
+                <span className="text-gray-300 line-through">{line.slice(6)}</span>
               </div>
             )
           }
@@ -343,8 +405,11 @@ export default function PostBounty() {
               </li>
             )
           }
+          if (line.trim() === "---") {
+            return <hr key={i} className="my-4 border-white/20" />
+          }
           return line ? (
-            <p key={i} className="mb-2 text-gray-300">
+            <p key={i} className="mb-3 text-gray-300 leading-relaxed">
               {line}
             </p>
           ) : (
@@ -367,61 +432,114 @@ export default function PostBounty() {
           >
             <div className="absolute inset-0 bg-gradient-to-br from-green-500/20 to-[#E23E6B]/20 opacity-50 rounded-3xl"></div>
             <div className="relative z-10 text-center">
-              <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-6" />
-              <h2 className={cn("text-3xl font-thin mb-4", poppins.className)}>
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+              >
+                <CheckCircle className="w-20 h-20 text-green-500 mx-auto mb-6" />
+              </motion.div>
+
+              <motion.h2
+                className={cn("text-3xl md:text-4xl font-thin mb-4", poppins.className)}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+              >
                 <AuroraText colors={["#22c55e", "#16a34a", "#ffffff", "#E23E6B"]}>
                   <span className="text-transparent">Bounty Created Successfully!</span>
                 </AuroraText>
-              </h2>
-              <p className="text-gray-300 mb-8">Your bounty has been created and is now live on the platform.</p>
+              </motion.h2>
 
-              <div className="grid gap-6 mb-8">
+              <motion.p
+                className="text-gray-300 mb-8 text-lg"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.4 }}
+              >
+                Your bounty is now live and ready to receive submissions
+              </motion.p>
+
+              <motion.div
+                className="grid gap-6 mb-8"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+              >
                 <div className="bg-green-500/10 border border-green-500/20 rounded-2xl p-6">
-                  <h3 className="font-semibold text-green-400 mb-4">Bounty Details</h3>
+                  <h3 className="font-semibold text-green-400 mb-4 flex items-center gap-2">
+                    <CheckCircle className="w-5 h-5" />
+                    Bounty Details
+                  </h3>
                   <div className="space-y-3 text-sm">
-                    <div className="flex justify-between">
+                    <div className="flex justify-between items-center">
                       <span className="text-gray-400">Title:</span>
-                      <span className="text-white">{formData.name}</span>
+                      <span className="text-white font-medium">{formData.name}</span>
                     </div>
-                    <div className="flex justify-between">
+                    <div className="flex justify-between items-center">
                       <span className="text-gray-400">Category:</span>
                       <div className="flex items-center gap-2">
                         <span>{selectedCategory?.emoji}</span>
-                        <span className="text-white">{selectedCategory?.label}</span>
+                        <span className="text-white font-medium">{selectedCategory?.label}</span>
                       </div>
                     </div>
-                    <div className="flex justify-between">
+                    <div className="flex justify-between items-center">
                       <span className="text-gray-400">Reward:</span>
-                      <span className="text-white">{formData.totalReward} USDT</span>
+                      <span className="text-white font-medium">{formData.totalReward} USDT</span>
                     </div>
-                    <div className="flex justify-between">
+                    <div className="flex justify-between items-center">
                       <span className="text-gray-400">Deadline:</span>
-                      <span className="text-white">{new Date(formData.deadline).toLocaleString()}</span>
+                      <span className="text-white font-medium">{new Date(formData.deadline).toLocaleString()}</span>
                     </div>
                   </div>
                 </div>
 
                 {ipfsUri && (
                   <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-6">
-                    <h3 className="font-semibold text-blue-400 mb-2">IPFS Metadata</h3>
-                    <div className="font-mono text-xs bg-white/5 p-3 rounded border break-all text-blue-300">
+                    <h3 className="font-semibold text-blue-400 mb-3 flex items-center gap-2">
+                      <Upload className="w-5 h-5" />
+                      IPFS Metadata
+                    </h3>
+                    <div className="font-mono text-xs bg-white/5 p-3 rounded-xl border break-all text-blue-300">
                       {ipfsUri}
                     </div>
+                    <button
+                      onClick={() => navigator.clipboard.writeText(ipfsUri)}
+                      className="mt-2 text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1"
+                    >
+                      <ExternalLink className="w-3 h-3" />
+                      Copy IPFS URI
+                    </button>
                   </div>
                 )}
 
                 <div className="bg-gray-500/10 border border-gray-500/20 rounded-2xl p-6">
-                  <h3 className="font-semibold text-gray-400 mb-2">Transaction Hash</h3>
-                  <div className="font-mono text-xs bg-white/5 p-3 rounded border break-all text-gray-300">
+                  <h3 className="font-semibold text-gray-400 mb-3 flex items-center gap-2">
+                    <Zap className="w-5 h-5" />
+                    Transaction Hash
+                  </h3>
+                  <div className="font-mono text-xs bg-white/5 p-3 rounded-xl border break-all text-gray-300">
                     {createHash}
                   </div>
+                  <button
+                    onClick={() => navigator.clipboard.writeText(createHash || "")}
+                    className="mt-2 text-xs text-gray-400 hover:text-gray-300 flex items-center gap-1"
+                  >
+                    <ExternalLink className="w-3 h-3" />
+                    Copy Transaction Hash
+                  </button>
                 </div>
-              </div>
+              </motion.div>
 
-              <div className="flex gap-4 justify-center">
+              <motion.div
+                className="flex flex-col sm:flex-row gap-4 justify-center"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6 }}
+              >
                 <motion.button
                   onClick={resetForm}
-                  className="px-8 py-3 bg-gradient-to-r from-[#E23E6B] to-[#cc4368] text-white font-medium rounded-2xl hover:from-[#cc4368] hover:to-[#E23E6B] transition-all duration-300"
+                  className="px-8 py-3 bg-gradient-to-r from-[#E23E6B] to-[#cc4368] text-white font-medium rounded-2xl hover:from-[#cc4368] hover:to-[#E23E6B] transition-all duration-300 shadow-lg hover:shadow-xl"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
@@ -430,14 +548,14 @@ export default function PostBounty() {
                 </motion.button>
                 <Link href="/dashboard/bounty">
                   <motion.button
-                    className="px-8 py-3 bg-white/10 text-white font-medium rounded-2xl hover:bg-white/20 transition-all duration-300"
+                    className="px-8 py-3 bg-white/10 text-white font-medium rounded-2xl hover:bg-white/20 transition-all duration-300 border border-white/20"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >
                     View All Bounties
                   </motion.button>
                 </Link>
-              </div>
+              </motion.div>
             </div>
           </motion.div>
         </div>
@@ -450,12 +568,12 @@ export default function PostBounty() {
       <div className="max-w-5xl mx-auto">
         {/* Header */}
         <motion.div
-          className="flex items-center justify-between mb-8"
+          className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <div>
+          <div className="flex-1">
             <motion.h1
               className={cn("text-3xl md:text-4xl font-thin mb-2", poppins.className)}
               initial={{ opacity: 0, x: -20 }}
@@ -472,7 +590,7 @@ export default function PostBounty() {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3, duration: 0.7 }}
             >
-              Fund your project with USDT tokens
+              Fund your project with USDT tokens and get quality submissions
             </motion.p>
           </div>
 
@@ -496,22 +614,42 @@ export default function PostBounty() {
           transition={{ delay: 0.2, duration: 0.5 }}
         >
           <div className="flex justify-between text-sm mb-3">
-            <span className="font-medium">Progress</span>
-            <span className="text-[#E23E6B]">{getStepProgress()}%</span>
+            <span className="font-medium">Creation Progress</span>
+            <span className="text-[#E23E6B] font-medium">{getStepProgress()}%</span>
           </div>
-          <div className="w-full bg-white/10 rounded-full h-2 mb-4">
+          <div className="w-full bg-white/10 rounded-full h-3 mb-4 overflow-hidden">
             <motion.div
-              className="bg-gradient-to-r from-[#E23E6B] to-[#cc4368] h-2 rounded-full"
+              className="bg-gradient-to-r from-[#E23E6B] to-[#cc4368] h-3 rounded-full shadow-lg"
               initial={{ width: 0 }}
               animate={{ width: `${getStepProgress()}%` }}
-              transition={{ duration: 0.5 }}
+              transition={{ duration: 0.5, ease: "easeInOut" }}
             />
           </div>
-          <div className="flex justify-between text-xs text-gray-400">
-            <span className={currentStep === CreateStep.FORM ? "text-[#E23E6B] font-medium" : ""}>📝 Form</span>
-            <span className={currentStep === CreateStep.IPFS ? "text-[#E23E6B] font-medium" : ""}>📤 IPFS</span>
-            <span className={currentStep === CreateStep.APPROVE ? "text-[#E23E6B] font-medium" : ""}>✅ Approve</span>
-            <span className={currentStep === CreateStep.CREATE ? "text-[#E23E6B] font-medium" : ""}>🚀 Create</span>
+          <div className="grid grid-cols-4 gap-2 text-xs">
+            <div
+              className={`text-center p-2 rounded-xl transition-all ${currentStep === CreateStep.FORM ? "bg-[#E23E6B]/20 text-[#E23E6B] font-medium" : "text-gray-400"}`}
+            >
+              <div className="mb-1">📝</div>
+              <div>Form</div>
+            </div>
+            <div
+              className={`text-center p-2 rounded-xl transition-all ${currentStep === CreateStep.IPFS ? "bg-[#E23E6B]/20 text-[#E23E6B] font-medium" : "text-gray-400"}`}
+            >
+              <div className="mb-1">📤</div>
+              <div>IPFS</div>
+            </div>
+            <div
+              className={`text-center p-2 rounded-xl transition-all ${currentStep === CreateStep.APPROVE ? "bg-[#E23E6B]/20 text-[#E23E6B] font-medium" : "text-gray-400"}`}
+            >
+              <div className="mb-1">✅</div>
+              <div>Approve</div>
+            </div>
+            <div
+              className={`text-center p-2 rounded-xl transition-all ${currentStep === CreateStep.CREATE ? "bg-[#E23E6B]/20 text-[#E23E6B] font-medium" : "text-gray-400"}`}
+            >
+              <div className="mb-1">🚀</div>
+              <div>Create</div>
+            </div>
           </div>
         </motion.div>
 
@@ -523,7 +661,7 @@ export default function PostBounty() {
             animate={{ opacity: 1, y: 0 }}
           >
             <div className="flex items-center gap-2 text-red-400">
-              <AlertCircle className="w-5 h-5" />
+              <AlertCircle className="w-5 h-5 flex-shrink-0" />
               <span>{error}</span>
             </div>
           </motion.div>
@@ -537,24 +675,29 @@ export default function PostBounty() {
             animate={{ opacity: 1, scale: 1 }}
           >
             <div className="relative mb-6">
-              <Upload className="w-16 h-16 mx-auto text-blue-500 animate-pulse" />
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
+              >
+                <Upload className="w-16 h-16 mx-auto text-blue-500" />
+              </motion.div>
               <div className="absolute -top-2 -right-2">
                 <div className="bg-blue-500 text-white rounded-full p-1">
                   <Zap className="w-4 h-4" />
                 </div>
               </div>
             </div>
-            <h3 className="text-xl font-thin mb-2">Uploading to IPFS</h3>
-            <p className="text-gray-400 mb-4">Storing bounty metadata on Pinata...</p>
-            <div className="w-full bg-white/10 rounded-full h-2 max-w-md mx-auto">
+            <h3 className="text-2xl font-thin mb-2">Uploading to IPFS</h3>
+            <p className="text-gray-400 mb-6">Storing bounty metadata securely on Pinata...</p>
+            <div className="w-full bg-white/10 rounded-full h-3 max-w-md mx-auto mb-2">
               <motion.div
-                className="bg-gradient-to-r from-blue-500 to-blue-700 h-2 rounded-full"
+                className="bg-gradient-to-r from-blue-500 to-blue-700 h-3 rounded-full"
                 initial={{ width: 0 }}
                 animate={{ width: `${uploadProgress}%` }}
                 transition={{ duration: 0.3 }}
               />
             </div>
-            <p className="text-xs text-gray-500 mt-2">{uploadProgress}% complete</p>
+            <p className="text-sm text-blue-400 font-medium">{uploadProgress}% complete</p>
           </motion.div>
         )}
 
@@ -566,7 +709,12 @@ export default function PostBounty() {
           >
             <div className="relative mb-6">
               {isApprovePending || isApproveConfirming ? (
-                <Loader2 className="w-16 h-16 text-yellow-500 animate-spin mx-auto" />
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
+                >
+                  <Loader2 className="w-16 h-16 text-yellow-500 mx-auto" />
+                </motion.div>
               ) : (
                 <CheckCircle className="w-16 h-16 text-green-500 mx-auto" />
               )}
@@ -576,20 +724,28 @@ export default function PostBounty() {
                 </div>
               </div>
             </div>
-            <h3 className="text-xl font-thin mb-2">
+            <h3 className="text-2xl font-thin mb-2">
               {isApprovePending
                 ? "Approving USDT..."
                 : isApproveConfirming
                   ? "Confirming Approval..."
                   : "Approval Complete"}
             </h3>
-            <p className="text-gray-400">
+            <p className="text-gray-400 mb-4">
               {isApprovePending
                 ? "Please confirm the transaction in your wallet"
                 : isApproveConfirming
                   ? "Waiting for blockchain confirmation"
                   : "USDT approval successful, creating bounty..."}
             </p>
+            {(isApprovePending || isApproveConfirming) && (
+              <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-2xl p-4 max-w-md mx-auto">
+                <div className="flex items-center gap-2 text-yellow-400 text-sm">
+                  <Info className="w-4 h-4" />
+                  <span>This may take a few moments to process</span>
+                </div>
+              </div>
+            )}
           </motion.div>
         )}
 
@@ -601,7 +757,12 @@ export default function PostBounty() {
           >
             <div className="relative mb-6">
               {isCreatePending || isCreateConfirming ? (
-                <Loader2 className="w-16 h-16 text-[#E23E6B] animate-spin mx-auto" />
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
+                >
+                  <Loader2 className="w-16 h-16 text-[#E23E6B] mx-auto" />
+                </motion.div>
               ) : (
                 <CheckCircle className="w-16 h-16 text-green-500 mx-auto" />
               )}
@@ -611,20 +772,28 @@ export default function PostBounty() {
                 </div>
               </div>
             </div>
-            <h3 className="text-xl font-thin mb-2">
+            <h3 className="text-2xl font-thin mb-2">
               {isCreatePending
                 ? "Creating Bounty..."
                 : isCreateConfirming
                   ? "Confirming Creation..."
                   : "Creation Complete"}
             </h3>
-            <p className="text-gray-400">
+            <p className="text-gray-400 mb-4">
               {isCreatePending
                 ? "Please confirm the transaction in your wallet"
                 : isCreateConfirming
                   ? "Waiting for blockchain confirmation"
                   : "Bounty created successfully"}
             </p>
+            {(isCreatePending || isCreateConfirming) && (
+              <div className="bg-[#E23E6B]/10 border border-[#E23E6B]/20 rounded-2xl p-4 max-w-md mx-auto">
+                <div className="flex items-center gap-2 text-[#E23E6B] text-sm">
+                  <Info className="w-4 h-4" />
+                  <span>Your bounty is being created on the blockchain</span>
+                </div>
+              </div>
+            )}
           </motion.div>
         )}
 
@@ -643,90 +812,89 @@ export default function PostBounty() {
               <form onSubmit={handleFormSubmit} className="space-y-8">
                 {/* Bounty Title */}
                 <div className="space-y-3">
-                  <label className="text-base font-medium flex items-center gap-2">🏷️ Bounty Title</label>
+                  <label className="text-base font-medium flex items-center gap-2">
+                    🏷️ Bounty Title
+                    <span className="text-red-400">*</span>
+                  </label>
                   <input
                     type="text"
-                    placeholder="E.g., Build a frontend dashboard for Coro Tashi"
+                    placeholder="E.g., Build a frontend dashboard for DeFi analytics"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:border-[#E23E6B] transition-colors duration-200"
+                    className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:border-[#E23E6B] focus:ring-2 focus:ring-[#E23E6B]/20 transition-all duration-200"
                     required
                   />
-                  <p className="text-sm text-gray-400">What's the title of your bounty?</p>
+                  <p className="text-sm text-gray-400">Choose a clear, descriptive title for your bounty</p>
                 </div>
 
                 {/* Description with Markdown Support */}
                 <div className="space-y-3">
-                  <label className="text-base font-medium flex items-center gap-2">📝 Description (Markdown)</label>
+                  <label className="text-base font-medium flex items-center gap-2">
+                    📝 Description (Markdown Supported)
+                    <span className="text-red-400">*</span>
+                  </label>
                   <div className="border border-white/20 rounded-2xl overflow-hidden">
                     <div className="flex border-b border-white/20">
                       <button
                         type="button"
-                        className="flex-1 px-4 py-2 bg-white/5 text-sm font-medium flex items-center justify-center gap-2"
+                        onClick={() => setShowPreview(false)}
+                        className={`flex-1 px-4 py-3 text-sm font-medium flex items-center justify-center gap-2 transition-colors duration-200 ${
+                          !showPreview ? "bg-white/10 text-white" : "text-gray-400 hover:bg-white/5"
+                        }`}
                       >
                         <FileText className="w-4 h-4" />
                         Write
                       </button>
                       <button
                         type="button"
-                        className="flex-1 px-4 py-2 text-sm font-medium flex items-center justify-center gap-2 hover:bg-white/5 transition-colors duration-200"
+                        onClick={() => setShowPreview(true)}
+                        className={`flex-1 px-4 py-3 text-sm font-medium flex items-center justify-center gap-2 transition-colors duration-200 ${
+                          showPreview ? "bg-white/10 text-white" : "text-gray-400 hover:bg-white/5"
+                        }`}
                       >
                         <Eye className="w-4 h-4" />
                         Preview
                       </button>
                     </div>
-                    <textarea
-                      placeholder="E.g., ## Task Overview&#10;Build a React app to visualize staking data...&#10;&#10;### Requirements&#10;- [ ] Responsive design&#10;- [ ] Real-time data&#10;- [ ] Clean UI/UX"
-                      value={formData.description}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      rows={10}
-                      className="w-full p-4 bg-transparent text-white placeholder-gray-400 focus:outline-none resize-none font-mono text-sm"
-                      required
-                    />
-                  </div>
-                  <p className="text-sm text-gray-400">
-                    📌 <strong>Note:</strong> This markdown will be saved as JSON metadata to IPFS via Pinata.
-                  </p>
-                </div>
-
-                {/* Reward Amount */}
-                <div className="space-y-3">
-                  <label className="text-base font-medium flex items-center gap-2">🧮 Reward in USDT</label>
-                  <div className="relative">
-                    <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                    <input
-                      type="number"
-                      step="0.000001"
-                      min="0"
-                      placeholder="E.g., 100.00"
-                      value={formData.totalReward}
-                      onChange={(e) => setFormData({ ...formData, totalReward: e.target.value })}
-                      className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/20 rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:border-[#E23E6B] transition-colors duration-200"
-                      required
-                    />
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-400">Total reward (in USDT)</span>
-                    {usdtBalance !== undefined && (
-                      <span className="text-gray-400">
-                        Available: <span className="text-white font-medium">{formatUnits(usdtBalance, 6)} USDT</span>
-                      </span>
+                    {!showPreview ? (
+                      <textarea
+                        placeholder="## Task Overview&#10;Build a React application to visualize DeFi staking data...&#10;&#10;### Requirements&#10;- [ ] Responsive design&#10;- [ ] Real-time data integration&#10;- [ ] Clean UI/UX&#10;&#10;### Deliverables&#10;- Source code repository&#10;- Live demo link&#10;- Documentation"
+                        value={formData.description}
+                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        rows={12}
+                        className="w-full p-4 bg-transparent text-white placeholder-gray-400 focus:outline-none resize-none font-mono text-sm"
+                        required
+                      />
+                    ) : (
+                      <div className="p-4 min-h-[300px] bg-white/5">{renderMarkdownPreview(formData.description)}</div>
                     )}
+                  </div>
+                  <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-3">
+                    <p className="text-sm text-blue-400 flex items-start gap-2">
+                      <Info className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                      <span>
+                        <strong>Pro tip:</strong> This description will be stored as JSON metadata on IPFS via Pinata.
+                        Use markdown formatting for better readability.
+                      </span>
+                    </p>
                   </div>
                 </div>
 
                 {/* Category Selection */}
-                <div className="space-y-3">
-                  <label className="text-base font-medium flex items-center gap-2">🗃️ Category</label>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div className="space-y-4">
+                  <label className="text-base font-medium flex items-center gap-2">
+                    🗃️ Category
+                    <span className="text-red-400">*</span>
+                  </label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {categories.map((category) => {
                       const isSelected = formData.category === category.value.toString()
                       return (
                         <motion.div
                           key={category.value}
-                          className={`border rounded-2xl p-4 cursor-pointer transition-all ${
+                          className={`border rounded-2xl p-4 cursor-pointer transition-all duration-200 ${
                             isSelected
-                              ? "border-[#E23E6B] bg-[#E23E6B]/10 shadow-lg"
+                              ? "border-[#E23E6B] bg-[#E23E6B]/10 shadow-lg shadow-[#E23E6B]/20"
                               : "border-white/20 hover:border-white/40 hover:bg-white/5"
                           }`}
                           onClick={() => setFormData({ ...formData, category: category.value.toString() })}
@@ -751,45 +919,86 @@ export default function PostBounty() {
                   </div>
                 </div>
 
-                {/* Deadline */}
-                <div className="space-y-3">
-                  <label className="text-base font-medium flex items-center gap-2">📅 Deadline</label>
-                  <div className="relative">
-                    <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                    <input
-                      type="datetime-local"
-                      value={formData.deadline}
-                      onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
-                      min={new Date().toISOString().slice(0, 16)}
-                      className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/20 rounded-2xl text-white focus:outline-none focus:border-[#E23E6B] transition-colors duration-200"
-                      required
-                    />
+                {/* Reward and Deadline Row */}
+                <div className="grid md:grid-cols-2 gap-6">
+                  {/* Reward Amount */}
+                  <div className="space-y-3">
+                    <label className="text-base font-medium flex items-center gap-2">
+                      💰 Reward Amount
+                      <span className="text-red-400">*</span>
+                    </label>
+                    <div className="relative">
+                      <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                      <input
+                        type="number"
+                        step="0.000001"
+                        min="0"
+                        placeholder="100.00"
+                        value={formData.totalReward}
+                        onChange={(e) => setFormData({ ...formData, totalReward: e.target.value })}
+                        className="w-full pl-10 pr-16 py-3 bg-white/5 border border-white/20 rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:border-[#E23E6B] focus:ring-2 focus:ring-[#E23E6B]/20 transition-all duration-200"
+                        required
+                      />
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 font-medium">
+                        USDT
+                      </div>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-400">Total reward pool</span>
+                      {usdtBalance !== undefined && (
+                        <span className="text-gray-400">
+                          Balance: <span className="text-white font-medium">{formatUnits(usdtBalance, 6)} USDT</span>
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <p className="text-sm text-gray-400 flex items-center gap-1">
-                    <Clock className="w-4 h-4" />
-                    Must be a future date
-                  </p>
+
+                  {/* Deadline */}
+                  <div className="space-y-3">
+                    <label className="text-base font-medium flex items-center gap-2">
+                      📅 Deadline
+                      <span className="text-red-400">*</span>
+                    </label>
+                    <div className="relative">
+                      <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                      <input
+                        type="datetime-local"
+                        value={formData.deadline}
+                        onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
+                        min={new Date().toISOString().slice(0, 16)}
+                        className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/20 rounded-2xl text-white focus:outline-none focus:border-[#E23E6B] focus:ring-2 focus:ring-[#E23E6B]/20 transition-all duration-200"
+                        required
+                      />
+                    </div>
+                    <p className="text-sm text-gray-400 flex items-center gap-1">
+                      <Clock className="w-4 h-4" />
+                      Must be a future date and time
+                    </p>
+                  </div>
                 </div>
 
                 {/* Transaction Status */}
                 {formData.totalReward && allowance !== undefined && (
-                  <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4">
-                    <h3 className="font-medium text-blue-400 mb-3">Transaction Status</h3>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">USDT Allowance:</span>
-                        <span className="text-white">{formatUnits(allowance, 6)} USDT</span>
+                  <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-6">
+                    <h3 className="font-medium text-blue-400 mb-4 flex items-center gap-2">
+                      <Info className="w-5 h-5" />
+                      Transaction Preview
+                    </h3>
+                    <div className="space-y-3 text-sm">
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-400">Current USDT Allowance:</span>
+                        <span className="text-white font-medium">{formatUnits(allowance, 6)} USDT</span>
                       </div>
-                      <div className="flex justify-between">
+                      <div className="flex justify-between items-center">
                         <span className="text-gray-400">Required Amount:</span>
-                        <span className="text-white">{formData.totalReward} USDT</span>
+                        <span className="text-white font-medium">{formData.totalReward} USDT</span>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">Approval Needed:</span>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-400">Approval Required:</span>
                         <span
-                          className={`px-2 py-1 rounded text-xs ${
+                          className={`px-3 py-1 rounded-full text-xs font-medium ${
                             parseUnits(formData.totalReward || "0", 6) > allowance
-                              ? "bg-red-500/20 text-red-400"
+                              ? "bg-yellow-500/20 text-yellow-400"
                               : "bg-green-500/20 text-green-400"
                           }`}
                         >
@@ -797,6 +1006,14 @@ export default function PostBounty() {
                         </span>
                       </div>
                     </div>
+                    {parseUnits(formData.totalReward || "0", 6) > allowance && (
+                      <div className="mt-4 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-xl">
+                        <p className="text-xs text-yellow-400">
+                          You'll need to approve USDT spending before creating the bounty. This requires two
+                          transactions.
+                        </p>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -808,7 +1025,10 @@ export default function PostBounty() {
                   whileTap={{ scale: isConnected ? 0.98 : 1 }}
                 >
                   {!isConnected ? (
-                    "Connect Wallet to Create Bounty"
+                    <div className="flex items-center justify-center gap-2">
+                      <AlertCircle className="w-5 h-5" />
+                      <span>Connect Wallet to Create Bounty</span>
+                    </div>
                   ) : (
                     <div className="flex items-center justify-center gap-2">
                       <Zap className="w-5 h-5" />
@@ -816,7 +1036,7 @@ export default function PostBounty() {
                         {allowance !== undefined &&
                         formData.totalReward &&
                         parseUnits(formData.totalReward || "0", 6) > allowance
-                          ? "Approve & Create Bounty"
+                          ? "Approve USDT & Create Bounty"
                           : "Create Bounty"}
                       </span>
                     </div>

@@ -12,6 +12,7 @@ import { formatUnits } from "viem"
 import { BOUNTY_CONTRACT_ADDRESS, BOUNTY_ABI } from "@/lib/contracts"
 import { getFromPinata, type PinataMetadata } from "@/lib/pinata"
 import { useWallet } from "@/contexts/wallet-context"
+import { useParams } from "next/navigation"
 
 const poppins = Poppins({
   weight: ["400", "500", "600", "700"],
@@ -20,14 +21,10 @@ const poppins = Poppins({
   variable: "--font-poppins",
 })
 
-interface SingleBountyProps {
-  bountyId: string
-}
-
 const categories = ["Content", "Development", "Design", "Research", "Marketing", "Other"]
 const statusLabels = ["Open", "Closed", "Cancelled"]
 
-export function SingleBounty({ bountyId }: SingleBountyProps) {
+function SingleBounty({ bountyId }: { bountyId: string }) {
   const { address, isConnected } = useWallet()
   const [ipfsMetadata, setIpfsMetadata] = useState<PinataMetadata | null>(null)
   const [isLoadingIpfs, setIsLoadingIpfs] = useState(false)
@@ -508,4 +505,33 @@ export function SingleBounty({ bountyId }: SingleBountyProps) {
   )
 }
 
-export default SingleBounty
+export default function BountyPage() {
+  const params = useParams()
+  const bountyId = params?.id as string
+
+  // Handle case where bountyId is undefined or invalid
+  if (!bountyId || isNaN(Number(bountyId))) {
+    return (
+      <div className={cn("min-h-screen bg-black text-white py-8 px-4 md:px-6", poppins.className)}>
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center py-12">
+            <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+            <h2 className="text-2xl font-thin mb-2">Invalid Bounty ID</h2>
+            <p className="text-gray-400 mb-6">The bounty ID provided is not valid.</p>
+            <Link href="/dashboard/bounty">
+              <motion.button
+                className="px-6 py-3 bg-gradient-to-r from-[#E23E6B] to-[#cc4368] rounded-2xl font-medium hover:from-[#cc4368] hover:to-[#E23E6B] transition-all duration-300"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                Back to Bounties
+              </motion.button>
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
+  }
+     
+  return <SingleBounty bountyId={bountyId} />
+}
