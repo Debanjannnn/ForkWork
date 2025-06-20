@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import axios from "axios"
-import { motion } from "framer-motion"
+import { motion, Variants } from "framer-motion"
 import { Poppins } from "next/font/google"
 import { cn } from "@/lib/utils"
 import { ExternalLink, MapPin, Calendar, Building2, Loader2, ArrowLeft } from "lucide-react"
@@ -56,7 +56,7 @@ export default function Web3Jobs() {
   }
 
   // Animation variants
-  const cardVariants = {
+  const cardVariants: Variants = {
     initial: {
       opacity: 0,
       y: 20,

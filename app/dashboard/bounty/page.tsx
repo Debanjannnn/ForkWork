@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { motion } from "framer-motion"
+import { motion, Variants } from "framer-motion"
 import { Poppins } from "next/font/google"
 import { cn } from "@/lib/utils"
 import { AuroraText } from "@/components/magicui/aurora-text"
@@ -62,7 +62,7 @@ export default function BountyFirst() {
   const [searchQuery, setSearchQuery] = useState("")
 
   // Animation variants
-  const cardVariants = {
+  const cardVariants: Variants = {
     initial: {
       opacity: 0,
       y: 20,

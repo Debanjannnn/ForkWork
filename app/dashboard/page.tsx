@@ -1,6 +1,6 @@
 "use client"
 
-import { motion } from "framer-motion"
+import { motion, Variants } from "framer-motion"
 import GitHubCalendar from "react-github-calendar"
 import { Poppins } from "next/font/google"
 import { cn } from "@/lib/utils"
@@ -28,7 +28,7 @@ const poppins = Poppins({
 })
 
 export default function Dashboard() {
-  const cardVariants = {
+  const cardVariants: Variants = {
     initial: { opacity: 0, y: 20 },
     animate: (index: number) => ({
       opacity: 1,

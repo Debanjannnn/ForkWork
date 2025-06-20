@@ -1,7 +1,7 @@
 "use client"
 
 import { Wallet, Trophy, DollarSign, ChevronRight } from "lucide-react"
-import { motion } from "framer-motion"
+import { motion, Variants } from "framer-motion"
 import { Poppins } from "next/font/google"
 import { cn } from "@/lib/utils"
 import { AuroraText } from "@/components/magicui/aurora-text"
@@ -15,7 +15,7 @@ const poppins = Poppins({
 
 export default function HowItWorks() {
   // Animation variants
-  const cardVariants = {
+  const cardVariants: Variants = {
     initial: {
       opacity: 0,
       y: 20,
@@ -38,7 +38,7 @@ export default function HowItWorks() {
     },
   }
 
-  const iconVariants = {
+  const iconVariants: Variants = {
     initial: {
       scale: 0.8,
       opacity: 0.5,
