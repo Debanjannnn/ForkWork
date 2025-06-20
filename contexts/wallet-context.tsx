@@ -3,6 +3,7 @@
 import type React from "react"
 import { createContext, useContext, useState, useEffect } from "react"
 import { useAccount, useConnect, useDisconnect } from "wagmi"
+import { motion, AnimatePresence } from "motion/react"
 
 
 interface WalletContextType {
@@ -22,25 +23,30 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   const { connect: wagmiConnect, connectors, isPending } = useConnect()
   const { disconnect: wagmiDisconnect } = useDisconnect()
   const [showConnectionAnimation, setShowConnectionAnimation] = useState(false)
-  const [wasConnected, setWasConnected] = useState(false)
+  const [hasShownAnimation, setHasShownAnimation] = useState(false)
 
   useEffect(() => {
-    if (isConnected && !wasConnected) {
+    // Only show animation when wallet connects for the first time in this session
+    if (isConnected && !hasShownAnimation) {
       setShowConnectionAnimation(true)
-      setWasConnected(true)
+      setHasShownAnimation(true)
       // Hide animation after 3 seconds
       const timer = setTimeout(() => {
         setShowConnectionAnimation(false)
       }, 3000)
       return () => clearTimeout(timer)
-    } else if (!isConnected) {
-      setWasConnected(false)
+    }
+  }, [isConnected, hasShownAnimation])
+
+  // Reset animation state when wallet disconnects
+  useEffect(() => {
+    if (!isConnected) {
       setShowConnectionAnimation(false)
     }
-  }, [isConnected, wasConnected])
+  }, [isConnected])
 
   const connect = (connectorId: string) => {
-    const connector = connectors.find((c) => c.id === connectorId)
+    const connector = connectors.find((c: any) => c.id === connectorId)
     if (connector) {
       wagmiConnect({ connector })
     }

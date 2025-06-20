@@ -141,7 +141,8 @@ export const FloatingNav = ({
                     <Button
                       variant="outline"
                       className="bg-green-900/20 border-green-500/30 text-green-400 hover:bg-green-900/30 transition-all duration-300 relative overflow-hidden"
-                    >
+                    > 
+                    {/* //@ts-ignore */}
                       <motion.div
                         animate={{ scale: [1, 1.2, 1] }}
                         transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}
