@@ -19,6 +19,7 @@ import {
   Award,
   Users,
   FileText,
+  Eye,
 } from "lucide-react"
 import Link from "next/link"
 import { useReadContract } from "wagmi"
@@ -318,6 +319,19 @@ function SingleBounty({ bountyId }: { bountyId: string }) {
           >
             <div className="flex items-center gap-4">
               <WalletDisplay />
+              {/* Show submissions button only to bounty owner */}
+              {isConnected && address && bounty && address.toLowerCase() === bounty.creator.toLowerCase() && (
+                <Link href={`/dashboard/bounties/${bountyId}/submissions`}>
+                  <motion.button
+                    className="flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-[#E23E6B] to-[#cc4368] text-white font-medium rounded-2xl hover:from-[#cc4368] hover:to-[#E23E6B] transition-all duration-300 shadow-lg hover:shadow-xl"
+                    whileHover={{ scale: 1.05, y: -2 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <Eye className="w-4 h-4" />
+                    <span>Manage Submissions</span>
+                  </motion.button>
+                </Link>
+              )}
               <Link href="/dashboard/bounties">
                 <motion.button
                   className="flex items-center gap-3 px-6 py-3 bg-white/10 backdrop-blur-md border border-white/20 text-white font-medium rounded-2xl hover:bg-white/20 transition-all duration-300 shadow-lg hover:shadow-xl"

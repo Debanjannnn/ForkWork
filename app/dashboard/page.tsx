@@ -20,6 +20,7 @@ import {
   Calendar,
 } from "lucide-react"
 import Link from "next/link"
+import { UserButton } from "@civic/auth/react"
 
 const poppins = Poppins({
   weight: ["400", "500", "600", "700"],
@@ -132,6 +133,7 @@ export default function Dashboard() {
           </div>
 
           <div className="flex items-center space-x-4">
+            <UserButton/>
             <WalletDisplay />
             <Link href="/">
               <motion.button
