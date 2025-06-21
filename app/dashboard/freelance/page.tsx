@@ -5,6 +5,7 @@ import { motion, Variants } from "framer-motion"
 import { Poppins } from "next/font/google"
 import { cn } from "@/lib/utils"
 import { AuroraText } from "@/components/magicui/aurora-text"
+import { WalletDisplay } from "@/components/ui/wallet-display"
 import {
   ArrowLeft,
   Search,
@@ -242,16 +243,19 @@ export default function FreelanceGigs() {
             </motion.p>
           </div>
 
-          <Link href="/dashboard">
-            <motion.button
-              className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-[#E23E6B] to-[#cc4368] text-white font-medium rounded-2xl hover:from-[#cc4368] hover:to-[#E23E6B] transition-all duration-300"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <ArrowLeft className="w-5 h-5" />
-              <span>Back to Dashboard</span>
-            </motion.button>
-          </Link>
+          <div className="flex items-center gap-4">
+            <WalletDisplay />
+            <Link href="/dashboard">
+              <motion.button
+                className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-[#E23E6B] to-[#cc4368] text-white font-medium rounded-2xl hover:from-[#cc4368] hover:to-[#E23E6B] transition-all duration-300"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <ArrowLeft className="w-5 h-5" />
+                <span>Back to Dashboard</span>
+              </motion.button>
+            </Link>
+          </div>
         </motion.div>
 
         {/* Search and Filters */}

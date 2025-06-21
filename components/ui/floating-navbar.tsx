@@ -42,17 +42,6 @@ export const FloatingNav = ({
     setIsVisible(true)
   }, [])
 
-  // Redirect to dashboard when wallet connects
-  useEffect(() => {
-    if (isConnected && address) {
-      // Only redirect if we're not already on the dashboard or a dashboard sub-page
-      const currentPath = window.location.pathname
-      if (!currentPath.startsWith('/dashboard')) {
-        router.push('/dashboard')
-      }
-    }
-  }, [isConnected, address, router])
-
   const getScale = (index: number) => {
     if (hoveredIndex === null) return 1
 

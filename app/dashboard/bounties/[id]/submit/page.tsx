@@ -25,6 +25,7 @@ import { cn } from "@/lib/utils"
 import { BOUNTY_CONTRACT_ADDRESS, BOUNTY_ABI } from "@/lib/contracts"
 import { useWallet } from "@/contexts/wallet-context"
 import { AuroraText } from "@/components/magicui/aurora-text"
+import { WalletDisplay } from "@/components/ui/wallet-display"
 
 const poppins = Poppins({
   weight: ["400", "500", "600", "700"],
@@ -212,32 +213,30 @@ function SubmitBountyComponent({ bountyId }: { bountyId: string }) {
       const parsed = parseMarkdown(markdownInput)
       setParsedSubmission(parsed)
 
-      if (parsed.codeBlocks.length === 0) {
-        toast.error("No code blocks found in your submission. Please include your code in ```language blocks.")
-        setCurrentStep(SubmissionStep.FORM)
-        return
-      }
-
       setCurrentStep(SubmissionStep.UPLOADING)
       setUploadProgress(0)
-      setProcessingStatus("Uploading code blocks to IPFS...")
+      setProcessingStatus("Uploading submission to IPFS...")
 
-      // Upload each code block to IPFS
+      // Upload code blocks to IPFS if any exist
       const uploadedBlocks: CodeBlock[] = []
-      for (let i = 0; i < parsed.codeBlocks.length; i++) {
-        const block = parsed.codeBlocks[i]
-        setProcessingStatus(`Uploading ${block.language} code block ${i + 1}/${parsed.codeBlocks.length}...`)
+      if (parsed.codeBlocks.length > 0) {
+        for (let i = 0; i < parsed.codeBlocks.length; i++) {
+          const block = parsed.codeBlocks[i]
+          setProcessingStatus(`Uploading ${block.language} code block ${i + 1}/${parsed.codeBlocks.length}...`)
 
-        const filename = `code-${i + 1}.${block.language}`
-        const ipfsHash = await uploadCodeToIPFS(block.code, filename)
+          const filename = `code-${i + 1}.${block.language}`
+          const ipfsHash = await uploadCodeToIPFS(block.code, filename)
 
-        uploadedBlocks.push({
-          ...block,
-          filename,
-          ipfsHash,
-        })
+          uploadedBlocks.push({
+            ...block,
+            filename,
+            ipfsHash,
+          })
 
-        setUploadProgress(((i + 1) / parsed.codeBlocks.length) * 70)
+          setUploadProgress(((i + 1) / parsed.codeBlocks.length) * 70)
+        }
+      } else {
+        setUploadProgress(70)
       }
 
       // Create main metadata
@@ -558,16 +557,19 @@ function SubmitBountyComponent({ bountyId }: { bountyId: string }) {
           </motion.h1>
           <motion.p className="text-gray-300/80 text-lg font-light">{bounty.name}</motion.p>
         </div>
-        <Link href={`/dashboard/bounties/${bountyId}`}>
-          <motion.button
-            className="flex items-center space-x-3 px-6 py-3 bg-gradient-to-r from-[#E23E6B] to-[#cc4368] text-white font-medium rounded-2xl hover:from-[#cc4368] hover:to-[#E23E6B] transition-all duration-300 shadow-md"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Back to Bounty</span>
-          </motion.button>
-        </Link>
+        <div className="flex items-center gap-4">
+          <WalletDisplay />
+          <Link href={`/dashboard/bounties/${bountyId}`}>
+            <motion.button
+              className="flex items-center space-x-3 px-6 py-3 bg-gradient-to-r from-[#E23E6B] to-[#cc4368] text-white font-medium rounded-2xl hover:from-[#cc4368] hover:to-[#E23E6B] transition-all duration-300 shadow-md"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back to Bounty</span>
+            </motion.button>
+          </Link>
+        </div>
       </motion.div>
 
       {/* Instructions */}
@@ -585,7 +587,7 @@ function SubmitBountyComponent({ bountyId }: { bountyId: string }) {
             <h3 className="text-lg font-medium text-blue-400 mb-3">🚀 Submit Your Bounty Solution</h3>
             <div className="text-sm text-gray-300 space-y-2">
               <p>
-                📌 Paste your entire solution in <strong>Markdown format</strong> below. We'll extract your code, upload
+                📌 Paste your entire solution in <strong>Markdown format</strong> below. We'll extract your code (if any), upload
                 it to IPFS, and submit your response.
               </p>
 
@@ -593,7 +595,7 @@ function SubmitBountyComponent({ bountyId }: { bountyId: string }) {
               <ul className="list-disc list-inside space-y-1 ml-4">
                 <li>🧠 A clear explanation of your approach</li>
                 <li>
-                  💻 All code blocks inside triple backticks (<code>```</code>)
+                  💻 Code blocks inside triple backticks (<code>```</code>) - <em>optional</em>
                 </li>
                 <li>⚙️ Setup or usage instructions (if applicable)</li>
                 <li>
@@ -755,14 +757,16 @@ export default MyComponent;
             whileTap={!isFormDisabled && markdownInput.trim() ? { scale: 0.98 } : {}}
           >
             <Zap className="w-5 h-5" />
-            <span>Process & Submit Solution</span>
+            <span>Submit Solution</span>
           </motion.button>
 
           {markdownInput.trim() && (
             <div className="mt-4 text-center">
               <p className="text-sm text-gray-400">
-                We'll automatically extract {parseMarkdown(markdownInput).codeBlocks.length} code block(s) and upload to
-                IPFS
+                {parseMarkdown(markdownInput).codeBlocks.length > 0 
+                  ? `We'll automatically extract ${parseMarkdown(markdownInput).codeBlocks.length} code block(s) and upload to IPFS`
+                  : "Your solution will be uploaded to IPFS and submitted to the blockchain"
+                }
               </p>
             </div>
           )}

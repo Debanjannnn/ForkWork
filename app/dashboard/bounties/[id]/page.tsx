@@ -13,6 +13,7 @@ import { BOUNTY_CONTRACT_ADDRESS, BOUNTY_ABI } from "@/lib/contracts"
 import { getFromPinata, type PinataMetadata } from "@/lib/pinata"
 import { useWallet } from "@/contexts/wallet-context"
 import { useParams } from "next/navigation"
+import { WalletDisplay } from "@/components/ui/wallet-display"
 
 const poppins = Poppins({
   weight: ["400", "500", "600", "700"],
@@ -243,16 +244,19 @@ function SingleBounty({ bountyId }: { bountyId: string }) {
             </motion.p>
           </div>
 
-          <Link href="/dashboard/bounties">
-            <motion.button
-              className="flex items-center space-x-3 px-6 py-3 bg-gradient-to-r from-[#E23E6B] to-[#cc4368] text-white font-medium rounded-2xl hover:from-[#cc4368] hover:to-[#E23E6B] transition-all duration-300 shadow-lg hover:shadow-xl"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Back to Bounties</span>
-            </motion.button>
-          </Link>
+          <div className="flex items-center gap-4">
+            <WalletDisplay />
+            <Link href="/dashboard/bounties">
+              <motion.button
+                className="flex items-center space-x-3 px-6 py-3 bg-gradient-to-r from-[#E23E6B] to-[#cc4368] text-white font-medium rounded-2xl hover:from-[#cc4368] hover:to-[#E23E6B] transition-all duration-300 shadow-lg hover:shadow-xl"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>Back to Bounties</span>
+              </motion.button>
+            </Link>
+          </div>
         </motion.div>
 
         {/* Main Content */}

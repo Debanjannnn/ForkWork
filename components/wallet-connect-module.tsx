@@ -14,7 +14,7 @@ interface WalletConnectModalProps {
 }
 
 export function WalletConnectModal({ isOpen, onClose }: WalletConnectModalProps) {
-  const { connect, isConnecting } = useWallet()
+  const { connect, isConnecting, setShouldRedirectToDashboard } = useWallet()
   const { connectors } = useConnect()
   const [selectedConnector, setSelectedConnector] = useState<string | null>(null)
 
@@ -22,6 +22,7 @@ export function WalletConnectModal({ isOpen, onClose }: WalletConnectModalProps)
     setSelectedConnector(connectorId)
     try {
       await connect(connectorId)
+      setShouldRedirectToDashboard(true)
       onClose()
     } catch (error) {
       console.error("Connection failed:", error)
