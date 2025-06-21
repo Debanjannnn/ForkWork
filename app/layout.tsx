@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { CivicAuthProvider } from "@civic/auth/nextjs";
 import { Providers } from "./providers";
+import { Chatbot } from "@/components/ui/chatbot";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,6 +33,7 @@ export default function RootLayout({
         <Providers>
           <CivicAuthProvider>
             {children}
+            <Chatbot />
           </CivicAuthProvider>
         </Providers>
       </body>
