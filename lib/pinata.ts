@@ -6,9 +6,13 @@ const PINATA_JWT =
 export interface PinataMetadata {
   name: string
   description: string
-  category: number
-  deadline: number
+  category?: number
+  deadline?: number
   createdAt?: number
+  title?: string
+  requirements?: string[]
+  deliverables?: string[]
+  skills?: string[]
 }
 
 export async function uploadToPinata(metadata: PinataMetadata): Promise<string> {
@@ -16,11 +20,11 @@ export async function uploadToPinata(metadata: PinataMetadata): Promise<string> 
     const data = JSON.stringify({
       pinataContent: metadata,
       pinataMetadata: {
-        name: `bounty-${metadata.name.replace(/\s+/g, "-").toLowerCase()}-${Date.now()}`,
+        name: `gig-${metadata.name?.replace(/\s+/g, "-").toLowerCase() || metadata.title?.replace(/\s+/g, "-").toLowerCase()}-${Date.now()}`,
         keyvalues: {
-          type: "bounty-metadata",
-          category: metadata.category.toString(),
-          deadline: metadata.deadline.toString(),
+          type: metadata.category !== undefined ? "bounty-metadata" : "gig-metadata",
+          ...(metadata.category !== undefined && { category: metadata.category.toString() }),
+          ...(metadata.deadline && { deadline: metadata.deadline.toString() }),
         },
       },
       pinataOptions: {
