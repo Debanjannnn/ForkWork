@@ -228,6 +228,7 @@ contract Allin1Bounty is ReentrancyGuard, Ownable {
         bounties[bountyId].submissionCount++;
         userSubmissions[msg.sender].push(bountyId);
         
+        
         emit SubmissionMade(bountyId, msg.sender, mainUri, block.timestamp);
     }
     
