@@ -2,7 +2,7 @@
 
 import { useState, useEffect, type FormEvent, type ReactNode } from "react"
 import { motion } from "framer-motion"
-import { Poppins } from 'next/font/google'
+import { Poppins } from "next/font/google"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useWriteContract, useWaitForTransactionReceipt } from "wagmi"
@@ -17,7 +17,7 @@ import { useWallet } from "@/contexts/wallet-context"
 import { AuroraText } from "@/components/magicui/aurora-text"
 import { WalletConnectModal } from "@/components/wallet-connect-module"
 import { WalletDisplay } from "@/components/ui/wallet-display"
-import { ArrowLeft, Briefcase, DollarSign, Clock, FileText, Sparkles, AlertCircle, Info } from 'lucide-react'
+import { ArrowLeft, Briefcase, DollarSign, Clock, FileText, Sparkles, AlertCircle, Info } from "lucide-react"
 
 const poppins = Poppins({
   weight: ["400", "500", "600", "700"],
@@ -91,14 +91,7 @@ function PostGigPage() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
 
-    if (
-      !title ||
-      !shortDescription ||
-      !detailedDescription ||
-      !usdtAmount ||
-      !duration ||
-      !proposalDuration
-    ) {
+    if (!title || !shortDescription || !detailedDescription || !usdtAmount || !duration || !proposalDuration) {
       toast.error("Please fill out all required fields.")
       return
     }
@@ -112,15 +105,18 @@ function PostGigPage() {
 
     try {
       toast.loading("Uploading details to IPFS...", { id: toastId })
-      
+
       const metadata: GigMetadata = {
         title,
         description: detailedDescription,
-        requirements: requirements.split('\n').filter(Boolean),
-        deliverables: deliverables.split('\n').filter(Boolean),
-        skills: skills.split(",").map((s) => s.trim()).filter(Boolean),
+        requirements: requirements.split("\n").filter(Boolean),
+        deliverables: deliverables.split("\n").filter(Boolean),
+        skills: skills
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean),
       }
-      
+
       const detailsUri = await uploadToPinata({
         ...metadata,
         name: title,
@@ -245,9 +241,9 @@ function PostGigPage() {
             </FormField>
 
             {/* Short Description */}
-            <FormField 
-              label="Short Description" 
-              icon={<FileText className="w-4 h-4 text-gray-400" />} 
+            <FormField
+              label="Short Description"
+              icon={<FileText className="w-4 h-4 text-gray-400" />}
               tooltip="A brief summary that will be stored on-chain. Keep it concise."
             >
               <textarea
@@ -260,11 +256,11 @@ function PostGigPage() {
               />
               <div className="text-xs text-gray-400 mt-1">{shortDescription.length}/280 characters</div>
             </FormField>
-            
+
             {/* Detailed Description */}
-            <FormField 
-              label="Detailed Description" 
-              icon={<FileText className="w-4 h-4 text-gray-400" />} 
+            <FormField
+              label="Detailed Description"
+              icon={<FileText className="w-4 h-4 text-gray-400" />}
               tooltip="Full gig details. This will be stored on IPFS."
             >
               <textarea
@@ -277,8 +273,8 @@ function PostGigPage() {
             </FormField>
 
             {/* Requirements */}
-            <FormField 
-              label="Requirements" 
+            <FormField
+              label="Requirements"
               icon={<FileText className="w-4 h-4 text-blue-400" />}
               tooltip="List each requirement on a new line"
             >
@@ -291,8 +287,8 @@ function PostGigPage() {
             </FormField>
 
             {/* Deliverables */}
-            <FormField 
-              label="Deliverables" 
+            <FormField
+              label="Deliverables"
               icon={<FileText className="w-4 h-4 text-green-400" />}
               tooltip="List each deliverable on a new line"
             >
@@ -303,11 +299,11 @@ function PostGigPage() {
                 className="w-full pl-3 pr-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-[#E23E6B] transition-colors duration-200 min-h-[100px] resize-none"
               />
             </FormField>
-            
+
             {/* Skills */}
-            <FormField 
-              label="Required Skills" 
-              icon={<Sparkles className="w-4 h-4 text-gray-400" />} 
+            <FormField
+              label="Required Skills"
+              icon={<Sparkles className="w-4 h-4 text-gray-400" />}
               tooltip="Enter skills separated by commas"
             >
               <input
@@ -335,9 +331,9 @@ function PostGigPage() {
               </FormField>
 
               {/* Native Stake */}
-              <FormField 
-                label="Freelancer Stake (EDU)" 
-                icon={<DollarSign className="w-4 h-4 text-yellow-400" />} 
+              <FormField
+                label="Freelancer Stake (EDU)"
+                icon={<DollarSign className="w-4 h-4 text-yellow-400" />}
                 tooltip="Optional stake that freelancers must deposit. Returned upon completion."
               >
                 <input
@@ -351,7 +347,7 @@ function PostGigPage() {
                 />
               </FormField>
             </div>
-            
+
             <div className="grid md:grid-cols-2 gap-6">
               {/* Total Duration */}
               <FormField label="Total Duration (Days)" icon={<Clock className="w-4 h-4 text-gray-400" />}>
@@ -360,16 +356,20 @@ function PostGigPage() {
                   placeholder="e.g., 30"
                   value={duration}
                   onChange={(e) => setDuration(e.target.value)}
-                  className="w-full pl-3 pr-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-[#E23E6B] transition-colors duration-200"
+                  className={`w-full pl-3 pr-4 py-3 bg-white/5 border rounded-xl text-white placeholder-gray-400 focus:outline-none transition-colors duration-200 ${
+                    duration && proposalDuration && Number(proposalDuration) >= Number(duration)
+                      ? "border-red-400/50 focus:border-red-400"
+                      : "border-white/20 focus:border-[#E23E6B]"
+                  }`}
                   min="1"
                   required
                 />
               </FormField>
 
               {/* Proposal Duration */}
-              <FormField 
-                label="Proposal Duration (Days)" 
-                icon={<Clock className="w-4 h-4 text-blue-400" />} 
+              <FormField
+                label="Proposal Duration (Days)"
+                icon={<Clock className="w-4 h-4 text-blue-400" />}
                 tooltip="How long freelancers have to submit proposals"
               >
                 <input
@@ -377,12 +377,33 @@ function PostGigPage() {
                   placeholder="e.g., 7"
                   value={proposalDuration}
                   onChange={(e) => setProposalDuration(e.target.value)}
-                  className="w-full pl-3 pr-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-[#E23E6B] transition-colors duration-200"
+                  className={`w-full pl-3 pr-4 py-3 bg-white/5 border rounded-xl text-white placeholder-gray-400 focus:outline-none transition-colors duration-200 ${
+                    duration && proposalDuration && Number(proposalDuration) >= Number(duration)
+                      ? "border-red-400/50 focus:border-red-400"
+                      : "border-white/20 focus:border-[#E23E6B]"
+                  }`}
                   min="1"
                   required
                 />
               </FormField>
             </div>
+
+            {/* Duration Validation Note */}
+            <motion.div
+              className="mt-4 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-xl flex items-start gap-3"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              <Info className="w-5 h-5 text-yellow-400 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-yellow-200 text-sm font-medium mb-1">Duration Requirements</p>
+                <p className="text-yellow-300/80 text-xs">
+                  The total gig duration must be longer than the proposal duration. For example, if freelancers have 7
+                  days to submit proposals, the total gig duration should be more than 7 days.
+                </p>
+              </div>
+            </motion.div>
 
             {/* Submit Button */}
             <div className="mt-8">
