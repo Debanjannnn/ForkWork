@@ -198,7 +198,7 @@ function GigCard({ gigId, index }: GigCardProps) {
             <div className="text-white font-semibold text-lg">{formatUnits(gigDetails.usdtAmount, 6)} USDT</div>
             {gigDetails.nativeStakeRequired > BigInt(0) && (
               <div className="text-xs text-yellow-400 mt-1">
-                +{formatEther(gigDetails.nativeStakeRequired)} EDU stake
+                +{formatEther(gigDetails.nativeStakeRequired)} ETH stake
               </div>
             )}
           </div>

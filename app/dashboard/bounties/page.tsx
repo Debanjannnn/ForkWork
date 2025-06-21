@@ -443,7 +443,7 @@ function Bounties() {
             <Trophy className="w-16 h-16 text-gray-500 mx-auto mb-4" />
             <h3 className={cn("text-xl font-thin mb-2", poppins.className)}>No Bounties Found</h3>
             <p className="text-gray-400 mb-6">Be the first to create a bounty on the platform!</p>
-            <Link href="dashboard/bounties/create">
+            <Link href="/dashboard/bounties/post">
               <motion.button
                 className="px-6 py-3 bg-gradient-to-r from-[#E23E6B] to-[#cc4368] rounded-2xl font-medium hover:from-[#cc4368] hover:to-[#E23E6B] transition-all duration-300"
                 whileHover={{ scale: 1.05 }}

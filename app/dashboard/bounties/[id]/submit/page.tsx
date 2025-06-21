@@ -296,7 +296,7 @@ function SubmitBountyComponent({ bountyId }: { bountyId: string }) {
       toast.success("Submission successful! Redirecting...", {
         description: "Your solution has been recorded on the blockchain.",
       })
-      setTimeout(() => router.push(`/dashboard/bounty/${bountyId}`), 3000)
+      setTimeout(() => router.push(`/dashboard/bounties/${bountyId}`), 3000)
     }
   }, [isConfirmed, router, bountyId])
 
@@ -437,7 +437,7 @@ function SubmitBountyComponent({ bountyId }: { bountyId: string }) {
           )}
 
           <div className="flex gap-4 justify-center">
-            <Link href={`/dashboard/bounty/${bountyId}`}>
+            <Link href={`/dashboard/bounties/${bountyId}`}>
               <motion.button
                 className="px-6 py-3 bg-gradient-to-r from-[#E23E6B] to-[#cc4368] rounded-2xl font-medium"
                 whileHover={{ scale: 1.05 }}
@@ -445,7 +445,7 @@ function SubmitBountyComponent({ bountyId }: { bountyId: string }) {
                 View Bounty
               </motion.button>
             </Link>
-            <Link href="/dashboard/bounty">
+            <Link href="/dashboard/bounties">
               <motion.button
                 className="px-6 py-3 bg-white/10 rounded-2xl font-medium border border-white/20"
                 whileHover={{ scale: 1.05 }}
@@ -790,7 +790,7 @@ export default function SubmitBountyPage() {
             <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
             <h2 className="text-2xl font-thin mb-2">Invalid Bounty ID</h2>
             <p className="text-gray-400 mb-6">The bounty ID provided is not valid.</p>
-            <Link href="/dashboard/bounty">
+            <Link href="/dashboard/bounties">
               <motion.button
                 className="px-6 py-3 bg-gradient-to-r from-[#E23E6B] to-[#cc4368] rounded-2xl font-medium hover:from-[#cc4368] hover:to-[#E23E6B] transition-all duration-300"
                 whileHover={{ scale: 1.05 }}

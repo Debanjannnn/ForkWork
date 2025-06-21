@@ -30,21 +30,21 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   const [hasShownAnimation, setHasShownAnimation] = useState(false)
   const [shouldRedirectToDashboard, setShouldRedirectToDashboard] = useState(false)
 
-  // EDU Chain Testnet ID
-  const EDU_CHAIN_ID = 656476
+  // Sepolia Chain ID
+const SEPOLIA_CHAIN_ID = 11155111
 
-  useEffect(() => {
-    // Only show animation when wallet connects for the first time in this session
-    if (isConnected && !hasShownAnimation) {
-      setShowConnectionAnimation(true)
-      setHasShownAnimation(true)
-      // Hide animation after 3 seconds
-      const timer = setTimeout(() => {
-        setShowConnectionAnimation(false)
-      }, 3000)
-      return () => clearTimeout(timer)
+// Switch to Sepolia if connected to wrong network
+useEffect(() => {
+  if (isConnected && chainId && chainId !== SEPOLIA_CHAIN_ID) {
+    console.log("Wallet context: Switching to Sepolia. Current chain:", chainId)
+    try {
+      switchChain({ chainId: SEPOLIA_CHAIN_ID })
+    } catch (error) {
+      console.error("Failed to switch to Sepolia:", error)
     }
-  }, [isConnected, hasShownAnimation])
+  }
+}, [isConnected, chainId, switchChain])
+
 
   // Reset animation state when wallet disconnects
   useEffect(() => {
@@ -67,10 +67,10 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
 
   // Switch to EDU Chain if connected to wrong network
   useEffect(() => {
-    if (isConnected && chainId && chainId !== EDU_CHAIN_ID) {
-      console.log("Wallet context: Switching to EDU Chain. Current chain:", chainId)
+    if (isConnected && chainId && chainId !== SEPOLIA_CHAIN_ID) {
+      console.log("Wallet context: Switching to Sepolia Testnet. Current chain:", chainId)
       try {
-        switchChain({ chainId: EDU_CHAIN_ID })
+        switchChain({ chainId: SEPOLIA_CHAIN_ID })
       } catch (error) {
         console.error("Failed to switch chain:", error)
       }
