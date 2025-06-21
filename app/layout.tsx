@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Fork Work",
-  description: "Because your gov doesn’t deserve 30%.",
+  description: "The only cut taken? Your gas fees.",
 };
 
 export default function RootLayout({
