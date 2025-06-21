@@ -95,7 +95,7 @@ const Hero = () => {
                         scale: springScale,
                     }}
                 >
-                    <h1 className="text-[clamp(3rem,15vw,12rem)] font-black leading-none tracking-tighter text-white">CHILLAXX</h1>
+                    <h1 className="text-[clamp(3rem,12vw,10rem)] font-black leading-none tracking-tighter text-white whitespace-nowrap">Fork That Job</h1>
                     <motion.div
                         className="absolute -z-10 w-[150%] h-[150%] rounded-full opacity-20 blur-3xl"
                         animate={{

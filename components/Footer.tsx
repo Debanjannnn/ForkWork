@@ -9,7 +9,7 @@ const Footer = () => {
           <p>All systems operational</p>
         </div>
         <div>
-          <p>©2025 ALLIN1. All rights reserved.</p>
+          <p>©2025 FORK WORK. All rights reserved.</p>
         </div>
       </div>
   )

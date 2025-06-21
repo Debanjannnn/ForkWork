@@ -103,10 +103,9 @@ export const FloatingNav = ({
               times: [0, 0.25, 0.5, 0.75, 1],
             }}
           />
-
           <div className="flex items-center space-x-2">
-            <Sparkles className="w-6 h-6 text-[#E23E6B]" />
-            <span className={cn("text-xl font-semibold text-white", poppins.className)}>AllIn1</span>
+            <img src="/logo1.png" alt="Fork Work" width={32} height={32} />
+            <span className={cn("text-xl font-semibold text-white", poppins.className)}>Fork Work</span>
           </div>
 
           <div className="flex items-center space-x-6">
