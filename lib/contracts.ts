@@ -1,6 +1,6 @@
 export const BOUNTY_CONTRACT_ADDRESS = "0xF332d208c52d1058769dfa035073F749db6B1b47" as const
 export const USDT_TOKEN_ADDRESS = "0x4f9fE99d666381a045b9F3690104a61cdC5c1bbe" as const
-
+export const FREELANCE_CONTRACT_ADDRESS = "0xD17B204D97eF0bee375368b677e29cA7e00db4f9" as const
 export const BOUNTY_ABI = [
   {
     inputs: [
@@ -1018,6 +1018,106 @@ export const ERC20_ABI = [
       },
     ],
     stateMutability: "nonpayable",
+    type: "function",
+  },
+] as const
+
+export const FREELANCE_ABI = [
+  {
+    inputs: [{ internalType: "address", name: "_mockUSDT", type: "address" }],
+    stateMutability: "nonpayable",
+    type: "constructor",
+  },
+  {
+    inputs: [{ internalType: "uint256", name: "gigId", type: "uint256" }],
+    name: "applyToGig",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [{ internalType: "uint256", name: "gigId", type: "uint256" }],
+    name: "approveWork",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [{ internalType: "uint256", name: "gigId", type: "uint256" }],
+    name: "depositStake",
+    outputs: [],
+    stateMutability: "payable",
+    type: "function",
+  },
+  {
+    inputs: [{ internalType: "uint256", name: "gigId", type: "uint256" }],
+    name: "fundGig",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      { internalType: "string", name: "title", type: "string" },
+      { internalType: "string", name: "description", type: "string" },
+      { internalType: "uint256", name: "usdtAmount", type: "uint256" },
+      { internalType: "uint256", name: "nativeStakeRequired", type: "uint256" },
+      { internalType: "uint256", name: "durationDays", type: "uint256" },
+    ],
+    name: "postGig",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [{ internalType: "uint256", name: "gigId", type: "uint256" }],
+    name: "releasePayment",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      { internalType: "uint256", name: "gigId", type: "uint256" },
+      { internalType: "address", name: "freelancer", type: "address" },
+    ],
+    name: "selectFreelancer",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "gigCount",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [{ internalType: "uint256", name: "gigId", type: "uint256" }],
+    name: "getGigDetails",
+    outputs: [
+      { internalType: "address", name: "client", type: "address" },
+      { internalType: "string", name: "title", type: "string" },
+      { internalType: "string", name: "description", type: "string" },
+      { internalType: "uint256", name: "usdtAmount", type: "uint256" },
+      { internalType: "uint256", name: "nativeStakeRequired", type: "uint256" },
+      { internalType: "address", name: "selectedFreelancer", type: "address" },
+      { internalType: "bool", name: "isApproved", type: "bool" },
+      { internalType: "bool", name: "isFunded", type: "bool" },
+      { internalType: "bool", name: "isStakeDeposited", type: "bool" },
+      { internalType: "bool", name: "isCompleted", type: "bool" },
+      { internalType: "uint256", name: "deadline", type: "uint256" },
+      { internalType: "uint256", name: "createdAt", type: "uint256" },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [{ internalType: "uint256", name: "gigId", type: "uint256" }],
+    name: "getApplicants",
+    outputs: [{ internalType: "address[]", name: "", type: "address[]" }],
+    stateMutability: "view",
     type: "function",
   },
 ] as const
