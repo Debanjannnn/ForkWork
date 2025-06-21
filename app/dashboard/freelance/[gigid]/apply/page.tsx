@@ -15,6 +15,7 @@ import { useWallet } from "@/contexts/wallet-context"
 
 import { AuroraText } from "@/components/magicui/aurora-text"
 import { WalletConnectModal } from "@/components/wallet-connect-module"
+import { WalletDisplay } from "@/components/ui/wallet-display"
 import ProposalForm from "@/components/freelance/proposal-form"
 import { ArrowLeft, AlertCircle, Loader, XCircle, Send } from "lucide-react"
 
@@ -41,24 +42,22 @@ function ApplyForGigPage() {
   const { address, isConnected } = useWallet()
   const [showWalletModal, setShowWalletModal] = useState(false)
 
-  const gigIdString = params.gigId as string
+  const gigIdString = params.gigid as string
   const isIdValid = typeof gigIdString === "string" && !isNaN(Number.parseInt(gigIdString))
-  const gigId = isIdValid ? BigInt(Number.parseInt(gigIdString)) : 0n
+  const gigId = isIdValid ? BigInt(Number.parseInt(gigIdString)) : BigInt(0)
 
   const { data: gigDetails, isLoading: isLoadingGigDetails } = useReadContract({
     address: FREELANCE_CONTRACT_ADDRESS,
     abi: FREELANCE_ABI,
     functionName: "getGigDetails",
     args: [gigId],
-    enabled: isIdValid,
   })
 
   const { data: canUserPropose, isLoading: isLoadingEligibility } = useReadContract({
     address: FREELANCE_CONTRACT_ADDRESS,
     abi: FREELANCE_ABI,
     functionName: "canUserPropose",
-    args: [gigId, address || "0x0000000000000000000000000000000000000000"],
-    enabled: isIdValid && isConnected,
+    args: [gigId, (address || "0x0000000000000000000000000000000000000000") as `0x${string}`],
   })
 
   const { data: hash, writeContractAsync, isPending: isWritePending } = useWriteContract()
@@ -102,6 +101,7 @@ ${formData.availability}
       toast.loading("Uploading proposal to IPFS...", { id: toastId })
 
       const proposalMetadata = {
+        name: `Proposal for Gig ${gigId}`,
         title: `Proposal for Gig ${gigId}`,
         description: formData.coverLetter,
         coverLetter: formData.coverLetter,
@@ -115,7 +115,7 @@ ${formData.availability}
         skills: [],
       }
 
-      const proposalUri = await uploadToPinata(proposalMetadata, "proposal")
+      const proposalUri = await uploadToPinata(proposalMetadata)
 
       toast.loading("Submitting proposal to blockchain...", { id: toastId })
 
@@ -212,16 +212,19 @@ ${formData.availability}
               Submitting a proposal for: <span className="text-white font-medium">{gigDetails?.title}</span>
             </p>
           </div>
-          <Link href={`/dashboard/freelance/${gigIdString}`}>
-            <motion.button
-              className="flex items-center space-x-2 px-5 py-3 bg-white/10 border border-white/20 rounded-2xl hover:bg-white/20 transition-all duration-300"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Back to Gig</span>
-            </motion.button>
-          </Link>
+          <div className="flex items-center gap-4">
+            <WalletDisplay />
+            <Link href={`/dashboard/freelance/${gigIdString}`}>
+              <motion.button
+                className="flex items-center space-x-2 px-5 py-3 bg-white/10 border border-white/20 rounded-2xl hover:bg-white/20 transition-all duration-300"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>Back to Gig</span>
+              </motion.button>
+            </Link>
+          </div>
         </motion.div>
 
         {/* Form */}

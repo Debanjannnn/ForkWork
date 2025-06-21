@@ -38,6 +38,7 @@ export default function ProposalCard({ proposal, gigId, gigDetails }: ProposalCa
         setIsLoading(true)
         try {
           const data = await getFromPinata(proposal.proposalUri)
+          // @ts-ignore
           setMetadata(data)
         } catch (error) {
           console.error("Failed to fetch proposal metadata:", error)

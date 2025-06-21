@@ -16,6 +16,7 @@ import { useWallet } from "@/contexts/wallet-context"
 
 import { AuroraText } from "@/components/magicui/aurora-text"
 import { WalletConnectModal } from "@/components/wallet-connect-module"
+import { WalletDisplay } from "@/components/ui/wallet-display"
 import { ArrowLeft, Briefcase, DollarSign, Clock, FileText, Sparkles, AlertCircle, Info } from 'lucide-react'
 
 const poppins = Poppins({
@@ -120,11 +121,14 @@ function PostGigPage() {
         skills: skills.split(",").map((s) => s.trim()).filter(Boolean),
       }
       
-      const detailsUri = await uploadToPinata(metadata)
+      const detailsUri = await uploadToPinata({
+        ...metadata,
+        name: title,
+      })
       toast.loading("Submitting transaction...", { id: toastId })
 
       const usdtAmountBigInt = parseUnits(usdtAmount, 6)
-      const nativeStakeBigInt = nativeStake ? parseEther(nativeStake) : 0n
+      const nativeStakeBigInt = nativeStake ? parseEther(nativeStake) : BigInt(0)
       const durationDaysBigInt = BigInt(duration)
       const proposalDurationDaysBigInt = BigInt(proposalDuration)
 
@@ -204,16 +208,19 @@ function PostGigPage() {
             </h1>
             <p className="text-gray-300/80 font-light">Define the scope, budget, and timeline for your project.</p>
           </div>
-          <Link href="/dashboard/freelance">
-            <motion.button
-              className="flex items-center space-x-2 px-5 py-3 bg-white/10 border border-white/20 rounded-2xl hover:bg-white/20 transition-all duration-300"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Back</span>
-            </motion.button>
-          </Link>
+          <div className="flex items-center gap-4">
+            <WalletDisplay />
+            <Link href="/dashboard/freelance">
+              <motion.button
+                className="flex items-center space-x-2 px-5 py-3 bg-white/10 border border-white/20 rounded-2xl hover:bg-white/20 transition-all duration-300"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>Back</span>
+              </motion.button>
+            </Link>
+          </div>
         </motion.div>
 
         {/* Form */}

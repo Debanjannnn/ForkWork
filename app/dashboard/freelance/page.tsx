@@ -196,7 +196,7 @@ function GigCard({ gigId, index }: GigCardProps) {
               <span className="text-xs text-gray-400 uppercase tracking-wide">Budget</span>
             </div>
             <div className="text-white font-semibold text-lg">{formatUnits(gigDetails.usdtAmount, 6)} USDT</div>
-            {gigDetails.nativeStakeRequired > 0n && (
+            {gigDetails.nativeStakeRequired > BigInt(0) && (
               <div className="text-xs text-yellow-400 mt-1">
                 +{formatEther(gigDetails.nativeStakeRequired)} EDU stake
               </div>
@@ -341,29 +341,31 @@ function FreelancePage() {
             </motion.p>
           </div>
 
-          <div className="flex items-center gap-4 mt-6 lg:mt-0">
-            <WalletDisplay />
-            <Link href="/dashboard">
-              <motion.button
-                className="flex items-center space-x-3 px-6 py-3 bg-white/10 border border-white/20 text-white font-medium rounded-2xl hover:bg-white/20 transition-all duration-300 shadow-lg hover:shadow-xl"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <ArrowLeft className="w-4 h-4" />
-                <span>Back to Dashboard</span>
-              </motion.button>
-            </Link>
+          <div className="flex justify-end items-center gap-4 mt-6 lg:mt-0">
+            <div className="flex items-center gap-4">
+              <WalletDisplay />
+              <Link href="/dashboard">
+                <motion.button
+                  className="flex items-center space-x-3 px-6 py-3 bg-white/10 border border-white/20 text-white font-medium rounded-2xl hover:bg-white/20 transition-all duration-300 shadow-lg hover:shadow-xl"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  <span>Back to Dashboard</span>
+                </motion.button>
+              </Link>
 
-            <Link href="/dashboard/freelance/post">
-              <motion.button
-                className="flex items-center space-x-3 px-8 py-4 bg-gradient-to-r from-[#E23E6B] to-[#cc4368] text-white font-medium rounded-3xl hover:from-[#cc4368] hover:to-[#E23E6B] transition-all duration-300 shadow-lg hover:shadow-xl"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Plus className="w-5 h-5" />
-                <span>Post Gig</span>
-              </motion.button>
-            </Link>
+              <Link href="/dashboard/freelance/post">
+                <motion.button
+                  className="flex items-center space-x-3 px-8 py-4 bg-gradient-to-r from-[#E23E6B] to-[#cc4368] text-white font-medium rounded-3xl hover:from-[#cc4368] hover:to-[#E23E6B] transition-all duration-300 shadow-lg hover:shadow-xl"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <Plus className="w-5 h-5" />
+                  <span>Post Gig</span>
+                </motion.button>
+              </Link>
+            </div>
           </div>
         </motion.div>
 

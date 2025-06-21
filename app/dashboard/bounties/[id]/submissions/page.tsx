@@ -42,6 +42,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Textarea } from "@/components/ui/textarea"
 import { BOUNTY_CONTRACT_ADDRESS, BOUNTY_ABI } from "@/lib/contracts"
 import { AuroraText } from "@/components/magicui/aurora-text"
+import { WalletDisplay } from "@/components/ui/wallet-display"
 import { getFromPinata, type PinataMetadata } from "@/lib/pinata"
 
 const poppins = Poppins({
@@ -464,20 +465,23 @@ function BountySubmissionsComponent({ bountyId }: { bountyId: string }) {
           </div>
 
           <motion.div
-            className="flex items-center gap-4"
+            className="flex justify-end items-center gap-4"
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.7, delay: 0.3 }}
           >
-            <motion.button
-              onClick={() => router.push(`/dashboard/bounties/${bountyId}`)}
-              className="flex items-center gap-3 px-6 py-3 bg-white/10 backdrop-blur-md border border-white/20 text-white font-medium rounded-2xl hover:bg-white/20 transition-all duration-300 shadow-lg hover:shadow-xl"
-              whileHover={{ scale: 1.05, y: -2 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Back to Bounty</span>
-            </motion.button>
+            <div className="flex items-center gap-4">
+              <WalletDisplay />
+              <motion.button
+                onClick={() => router.push(`/dashboard/bounties/${bountyId}`)}
+                className="flex items-center gap-3 px-6 py-3 bg-white/10 backdrop-blur-md border border-white/20 text-white font-medium rounded-2xl hover:bg-white/20 transition-all duration-300 shadow-lg hover:shadow-xl"
+                whileHover={{ scale: 1.05, y: -2 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>Back to Bounty</span>
+              </motion.button>
+            </div>
           </motion.div>
         </motion.div>
 

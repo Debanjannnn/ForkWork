@@ -53,9 +53,15 @@ export default function JobApply() {
     async function fetchJobDetails() {
       try {
         setLoading(true)
+        console.log("Fetching job details for ID:", jobId)
         const response = await axios.get("/api/jobs")
+        console.log("API response:", response.data)
+        
         const jobList = response.data[2] // assuming job array is at index 2
+        console.log("Job list:", jobList)
+        
         const foundJob = jobList.find((j: Job) => j.id === jobId)
+        console.log("Found job:", foundJob)
         
         if (foundJob) {
           setJob(foundJob)
@@ -80,9 +86,24 @@ export default function JobApply() {
   }
 
   const handleExternalApply = () => {
-    if (job?.apply_url) {
-      window.open(job.apply_url, '_blank', 'noopener,noreferrer')
+    console.log("Apply button clicked")
+    console.log("Job data:", job)
+    console.log("Apply URL:", job?.apply_url)
+    
+    if (!job?.apply_url) {
+      console.error("No apply URL found for this job")
+      alert("Sorry, the application link is not available for this position. Please check back later or contact the company directly.")
+      return
     }
+    
+    // Create a temporary anchor element and click it
+    const link = document.createElement('a')
+    link.href = job.apply_url
+    link.target = '_blank'
+    link.rel = 'noopener noreferrer'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
   }
 
   if (loading) {
@@ -137,21 +158,23 @@ export default function JobApply() {
       <div className="max-w-4xl mx-auto">
         {/* Back Button */}
         <motion.div
-          className="flex justify-between items-center mb-8"
+          className="flex justify-end items-center mb-8"
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <WalletDisplay />
-          <motion.button
-            onClick={handleBackClick}
-            className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-[#E23E6B] to-[#cc4368] text-white font-medium rounded-2xl hover:from-[#cc4368] hover:to-[#E23E6B] transition-all duration-300 group backdrop-blur-md border border-white/20 shadow-lg"
-            whileHover={{ scale: 1.05, y: -2 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform duration-300" />
-            <span>Back</span>
-          </motion.button>
+          <div className="flex items-center space-x-4">
+            <WalletDisplay />
+            <motion.button
+              onClick={handleBackClick}
+              className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-[#E23E6B] to-[#cc4368] text-white font-medium rounded-2xl hover:from-[#cc4368] hover:to-[#E23E6B] transition-all duration-300 group backdrop-blur-md border border-white/20 shadow-lg"
+              whileHover={{ scale: 1.05, y: -2 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform duration-300" />
+              <span>Back</span>
+            </motion.button>
+          </div>
         </motion.div>
 
         {/* Application Header */}
@@ -289,7 +312,7 @@ export default function JobApply() {
         >
           <motion.button
             onClick={handleExternalApply}
-            className="inline-flex items-center px-12 py-6 bg-gradient-to-r from-[#E23E6B] to-[#cc4368] text-white font-bold text-xl rounded-3xl hover:from-[#cc4368] hover:to-[#E23E6B] transition-all duration-300 group shadow-2xl"
+            className="inline-flex items-center px-12 py-6 bg-gradient-to-r from-[#E23E6B] to-[#cc4368] text-white font-bold text-xl rounded-3xl hover:from-[#cc4368] hover:to-[#E23E6B] transition-all duration-300 group shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed"
             whileHover={{ scale: 1.05, y: -3 }}
             whileTap={{ scale: 0.95 }}
           >
@@ -300,6 +323,37 @@ export default function JobApply() {
           <p className="text-gray-400 text-sm mt-4">
             You will be redirected to the company's application portal
           </p>
+
+          {/* Fallback URL Display */}
+          {job?.apply_url && (
+            <motion.div
+              className="mt-6 p-4 bg-white/5 backdrop-blur-md border border-white/20 rounded-2xl"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5, duration: 0.7 }}
+            >
+              <p className="text-gray-300 text-sm mb-2">If the button doesn't work, you can use this link:</p>
+              <div className="flex items-center space-x-2">
+                <a
+                  href={job.apply_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-sm text-gray-200 hover:border-[#E23E6B] transition-colors focus:outline-none focus:border-[#E23E6B]"
+                >
+                  {job.apply_url}
+                </a>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(job.apply_url);
+                    alert("URL copied to clipboard!");
+                  }}
+                  className="px-4 py-2 bg-[#E23E6B] text-white text-sm rounded-lg hover:bg-[#cc4368] transition-colors"
+                >
+                  Copy
+                </button>
+              </div>
+            </motion.div>
+          )}
         </motion.div>
 
         {/* Disclaimer */}

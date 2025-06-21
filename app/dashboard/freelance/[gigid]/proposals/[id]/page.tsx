@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils"
 
 import { AuroraText } from "@/components/magicui/aurora-text"
 import { WalletConnectModal } from "@/components/wallet-connect-module"
+import { WalletDisplay } from "@/components/ui/wallet-display"
 import { ProposalRenderer } from "@/components/freelance/proposal-rendered"
 import {
   ArrowLeft,
@@ -53,13 +54,13 @@ function ProposalDetailPage() {
   const [currentAction, setCurrentAction] = useState<ActionType>(null)
 
   // Extract and validate params from URL
-  const gigIdString = params.id as string
-  const freelancerAddress = params.address as `0x${string}`
+  const gigIdString = params.gigid as string
+  const freelancerAddress = params.id as `0x${string}`
   const isParamsValid =
     typeof gigIdString === "string" &&
     !isNaN(Number.parseInt(gigIdString)) &&
     /^0x[a-fA-F0-9]{40}$/.test(freelancerAddress)
-  const gigId = isParamsValid ? BigInt(Number.parseInt(gigIdString)) : 0n
+  const gigId = isParamsValid ? BigInt(Number.parseInt(gigIdString)) : BigInt(0)
 
   // --- Smart Contract Read Operations ---
   const {
@@ -71,7 +72,7 @@ function ProposalDetailPage() {
     abi: FREELANCE_ABI,
     functionName: "getGigDetails",
     args: [gigId],
-    enabled: isParamsValid && isConnected,
+    ...(isParamsValid && isConnected ? {} : { query: { enabled: false } }),
   })
 
   const {
@@ -83,7 +84,7 @@ function ProposalDetailPage() {
     abi: FREELANCE_ABI,
     functionName: "getProposal",
     args: [gigId, freelancerAddress],
-    enabled: isParamsValid && isConnected,
+    ...(isParamsValid && isConnected ? {} : { query: { enabled: false } }),
   })
 
   // --- Smart Contract Write Operations ---
@@ -320,16 +321,19 @@ function ProposalDetailPage() {
               For Gig: <span className="text-white font-medium">{gigDetails.title}</span>
             </p>
           </div>
-          <Link href={`/dashboard/freelance/${gigIdString}/proposals`}>
-            <motion.button
-              className="flex items-center space-x-2 px-5 py-3 bg-white/10 border border-white/20 rounded-2xl hover:bg-white/20 transition-all duration-300"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>All Proposals</span>
-            </motion.button>
-          </Link>
+          <div className="flex items-center gap-4">
+            <WalletDisplay />
+            <Link href={`/dashboard/freelance/${gigIdString}/proposals`}>
+              <motion.button
+                className="flex items-center space-x-2 px-5 py-3 bg-white/10 border border-white/20 rounded-2xl hover:bg-white/20 transition-all duration-300"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>All Proposals</span>
+              </motion.button>
+            </Link>
+          </div>
         </motion.div>
 
         {/* Status Banners */}

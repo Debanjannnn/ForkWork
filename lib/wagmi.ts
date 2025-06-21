@@ -24,15 +24,33 @@ const eduChainTestnet = {
   testnet: true,
 } as const
 
+// Get WalletConnect project ID from environment or use a fallback
+const walletConnectProjectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || ""
+
+console.log("Wagmi config: WalletConnect project ID:", walletConnectProjectId ? "Set" : "Not set")
+
+const connectors = [
+  injected(),
+  metaMask(),
+  // Only add WalletConnect if project ID is available
+  ...(walletConnectProjectId ? [
+    walletConnect({
+      projectId: walletConnectProjectId,
+      metadata: {
+        name: "H4B Platform",
+        description: "H4B Freelance and Bounty Platform",
+        url: typeof window !== 'undefined' ? window.location.origin : 'https://h4b.com',
+        icons: ['https://h4b.com/icon.png']
+      }
+    })
+  ] : []),
+]
+
+console.log("Wagmi config: Available connectors:", connectors.map(c => c.name))
+
 export const config = createConfig({
   chains: [eduChainTestnet],
-  connectors: [
-    injected(),
-    metaMask(),
-    walletConnect({
-      projectId: "your-project-id", // Replace with your WalletConnect project ID
-    }),
-  ],
+  connectors,
   transports: {
     [eduChainTestnet.id]: http(),
   },

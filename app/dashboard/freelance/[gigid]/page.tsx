@@ -15,6 +15,7 @@ import { useWallet } from "@/contexts/wallet-context"
 
 import { AuroraText } from "@/components/magicui/aurora-text"
 import { WalletConnectModal } from "@/components/wallet-connect-module"
+import { WalletDisplay } from "@/components/ui/wallet-display"
 import {
   ArrowLeft,
   Briefcase,
@@ -53,16 +54,15 @@ function GigDetailPage() {
   const [metadata, setMetadata] = useState<GigMetadata | null>(null)
   const [isLoadingMetadata, setIsLoadingMetadata] = useState(true)
 
-  const gigIdString = params.gigId as string
+  const gigIdString = params.gigid as string
   const isIdValid = typeof gigIdString === "string" && !isNaN(Number.parseInt(gigIdString))
-  const gigId = isIdValid ? BigInt(Number.parseInt(gigIdString)) : 0n
+  const gigId = isIdValid ? BigInt(Number.parseInt(gigIdString)) : BigInt(0)
 
   const { data: gigDetails, isLoading: isLoadingGigDetails } = useReadContract({
     address: FREELANCE_CONTRACT_ADDRESS,
     abi: FREELANCE_ABI,
     functionName: "getGigDetails",
     args: [gigId],
-    enabled: isIdValid,
   })
 
   const { data: proposals } = useReadContract({
@@ -70,15 +70,13 @@ function GigDetailPage() {
     abi: FREELANCE_ABI,
     functionName: "getAllProposals",
     args: [gigId],
-    enabled: isIdValid,
   })
 
   const { data: canUserPropose } = useReadContract({
     address: FREELANCE_CONTRACT_ADDRESS,
     abi: FREELANCE_ABI,
     functionName: "canUserPropose",
-    args: [gigId, address || "0x0000000000000000000000000000000000000000"],
-    enabled: isIdValid && isConnected,
+    args: [gigId, (address || "0x0000000000000000000000000000000000000000") as `0x${string}`],
   })
 
   useEffect(() => {
@@ -184,7 +182,12 @@ function GigDetailPage() {
               <span>Back to Freelance</span>
             </motion.button>
           </Link>
-          <div className={`text-sm font-medium px-4 py-2 rounded-full border ${status.color}`}>{status.label}</div>
+          <div className="flex justify-end items-center gap-4">
+            <div className="flex items-center gap-4">
+              <WalletDisplay />
+              <div className={`text-sm font-medium px-4 py-2 rounded-full border ${status.color}`}>{status.label}</div>
+            </div>
+          </div>
         </motion.div>
 
         <div className="grid lg:grid-cols-3 gap-8">
@@ -349,7 +352,7 @@ function GigDetailPage() {
                   </div>
                   <div className="text-right">
                     <div className="font-semibold">{formatUnits(gigDetails.usdtAmount, 6)} USDT</div>
-                    {gigDetails.nativeStakeRequired > 0n && (
+                    {gigDetails.nativeStakeRequired > BigInt(0) && (
                       <div className="text-xs text-yellow-400">
                         +{formatEther(gigDetails.nativeStakeRequired)} EDU stake
                       </div>

@@ -58,7 +58,7 @@ function ProposalSubmissionForm({ gigId }: ProposalSubmissionFormProps) {
         portfolio,
         additionalNotes,
       }
-
+ //@ts-ignore
       const proposalUri = await uploadToPinata(metadata)
       toast.loading("Submitting to blockchain...", { id: toastId })
 

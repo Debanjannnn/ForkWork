@@ -138,21 +138,23 @@ export default function JobDetails() {
       <div className="max-w-4xl mx-auto">
         {/* Back Button */}
         <motion.div
-          className="flex justify-between items-center mb-8"
+          className="flex justify-end items-center mb-8"
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <WalletDisplay />
-          <motion.button
-            onClick={handleBackClick}
-            className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-[#E23E6B] to-[#cc4368] text-white font-medium rounded-2xl hover:from-[#cc4368] hover:to-[#E23E6B] transition-all duration-300 group backdrop-blur-md border border-white/20 shadow-lg"
-            whileHover={{ scale: 1.05, y: -2 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform duration-300" />
-            <span>Back to Jobs</span>
-          </motion.button>
+          <div className="flex items-center space-x-4">
+            <WalletDisplay />
+            <motion.button
+              onClick={handleBackClick}
+              className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-[#E23E6B] to-[#cc4368] text-white font-medium rounded-2xl hover:from-[#cc4368] hover:to-[#E23E6B] transition-all duration-300 group backdrop-blur-md border border-white/20 shadow-lg"
+              whileHover={{ scale: 1.05, y: -2 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform duration-300" />
+              <span>Back to Jobs</span>
+            </motion.button>
+          </div>
         </motion.div>
 
         {/* Job Header */}

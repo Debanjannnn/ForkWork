@@ -1,13 +1,13 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect } from "react"
 import axios from "axios"
-import { motion, type Variants } from "framer-motion"
+import Link from "next/link"
+import { motion } from "framer-motion"
+import { Briefcase, MapPin, ExternalLink, ArrowLeft } from "lucide-react"
+import { AuroraText } from "@/components/magicui/aurora-text"
 import { Poppins } from "next/font/google"
 import { cn } from "@/lib/utils"
-import { ExternalLink, MapPin, Calendar, Building2, Loader2, ArrowLeft, Eye } from "lucide-react"
-import { AuroraText } from "@/components/magicui/aurora-text"
 import { WalletDisplay } from "@/components/ui/wallet-display"
 
 const poppins = Poppins({
@@ -17,33 +17,31 @@ const poppins = Poppins({
   variable: "--font-poppins",
 })
 
-type Job = {
-  id: string
+interface Job {
   title: string
-  date: string
-  date_epoch: number
-  country: string
-  city: string
   company: string
   location: string
   apply_url: string
-  tags: string[]
-  description: string
 }
 
-export default function Web3Jobs() {
+export default function Jobs() {
   const [jobs, setJobs] = useState<Job[]>([])
+  const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
-  const router = useRouter()
 
   useEffect(() => {
-    async function fetchJobs() {
+    const fetchJobs = async () => {
       try {
+        setLoading(true)
+        setError(null)
         const response = await axios.get("/api/jobs")
-        const jobList = response.data[2] // assuming job array is at index 2
-        setJobs(jobList)
+
+        if (Array.isArray(response.data)) {
+          setJobs(response.data[2] || [])
+        }
       } catch (error) {
-        console.error("Error fetching Web3 jobs:", error)
+        console.error("Error fetching jobs:", error)
+        setError("Failed to load jobs. Please try again later.")
       } finally {
         setLoading(false)
       }
@@ -52,240 +50,161 @@ export default function Web3Jobs() {
     fetchJobs()
   }, [])
 
-  const handleBackClick = () => {
-    router.back()
-  }
-
-  const handleViewDetails = (job: Job) => {
-    // Navigate to job details page
-    router.push(`/dashboard/jobs/${job.id}`)
-  }
-
-  const handleApplyNow = (job: Job) => {
-    // Navigate to apply page with job data
-    router.push(`/dashboard/jobs/apply/${job.id}`)
-  }
-
-  // Animation variants
-  const cardVariants: Variants = {
-    initial: {
-      opacity: 0,
-      y: 20,
-    },
-    animate: (index: number) => ({
-      opacity: 1,
-      y: 0,
-      transition: {
-        delay: 0.1 * index,
-        duration: 0.5,
-        ease: "easeOut",
-      },
-    }),
-    hover: {
-      y: -5,
-      transition: {
-        duration: 0.3,
-        ease: "easeInOut",
-      },
-    },
-  }
-
-  const containerVariants = {
-    initial: { opacity: 0 },
-    animate: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-      },
-    },
-  }
-
-  if (loading) {
-    return (
-      <div className={cn("min-h-screen bg-black text-white py-16 px-4 md:px-6", poppins.className)}>
-        <div className="max-w-6xl mx-auto">
-          <div className="flex items-center justify-center min-h-[400px]">
-            <motion.div
-              className="flex items-center space-x-3"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5 }}
-            >
-              <Loader2 className="w-8 h-8 text-[#E23E6B] animate-spin" />
-              <span className="text-xl text-gray-300">Loading Web3 opportunities...</span>
-            </motion.div>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
   return (
-    <div className={cn("min-h-screen bg-black text-white py-16 px-4 md:px-6", poppins.className)}>
-      {/* SVG Gradients */}
-      <svg width="0" height="0" className="absolute">
-        <linearGradient id="text-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor="#E23E6B" />
-          <stop offset="100%" stopColor="white" />
-        </linearGradient>
-        <linearGradient id="tag-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#E23E6B" />
-          <stop offset="100%" stopColor="#cc4368" />
-        </linearGradient>
-      </svg>
+    <div className={cn("min-h-screen bg-black text-white py-8 px-4 md:px-6", poppins.className)}>
+      {/* Ambient background with moving particles */}
 
-      <div className="max-w-6xl mx-auto">
-        {/* Back Button */}
-        <motion.div
-          className="flex justify-between items-center mb-8"
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <WalletDisplay />
-          <motion.button
-            onClick={handleBackClick}
-            className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-[#E23E6B] to-[#cc4368] text-white font-medium rounded-2xl hover:from-[#cc4368] hover:to-[#E23E6B] transition-all duration-300 group backdrop-blur-md border border-white/20 shadow-lg"
-            whileHover={{ scale: 1.05, y: -2 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform duration-300" />
-            <span>Back to Dashboard</span>
-          </motion.button>
-        </motion.div>
-
+      <div className="relative z-10 max-w-7xl mx-auto">
         {/* Header */}
         <motion.div
-          className="text-center mb-16"
+          className="flex flex-col lg:flex-row items-start lg:items-center justify-between mb-12"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7 }}
+          transition={{ duration: 0.5 }}
         >
-          <motion.h1
-            className={cn("text-3xl md:text-4xl lg:text-5xl font-thin text-center mb-4", poppins.className)}
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7 }}
-          >
-            <AuroraText colors={["#cc4368", "#e6295c", "#ffffff", "#E23E6B"]}>
-              <span className="text-transparent">Web3 Career Opportunities</span>
-            </AuroraText>
-          </motion.h1>
-          <motion.p
-            className="text-gray-300/80 text-xl max-w-3xl mx-auto"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3, duration: 0.7 }}
-          >
-            Discover the latest opportunities in the decentralized world. Build your Web3 career with top companies and
-            innovative projects.
-          </motion.p>
-        </motion.div>
-
-        {/* Jobs Grid */}
-        <motion.div
-          className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
-          variants={containerVariants}
-          initial="initial"
-          animate="animate"
-        >
-          {jobs.map((job, index) => (
-            <motion.div
-              key={job.id}
-              className="bg-white/5 backdrop-blur-md border border-white/20 rounded-3xl p-6 flex flex-col relative group overflow-hidden shadow-lg h-full"
-              variants={cardVariants}
-              custom={index}
-              whileHover="hover"
+          <div>
+            <motion.h1
+              className={cn("text-3xl md:text-4xl lg:text-5xl font-thin mb-3", poppins.className)}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.7 }}
             >
-              {/* Hover gradient overlay */}
-              <div className="absolute inset-0 bg-gradient-to-br from-white to-[#E23E6B] opacity-0 group-hover:opacity-10 transition-opacity duration-300 rounded-3xl"></div>
+              <AuroraText colors={["#cc4368", "#e6295c", "#ffffff", "#E23E6B"]}>
+                <span className="text-transparent">Web3 Jobs</span>
+              </AuroraText>
+            </motion.h1>
+            <motion.p
+              className="text-gray-300/80 text-xl font-light max-w-2xl"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3, duration: 0.7 }}
+            >
+              Discover the latest opportunities in the Web3 space and take your career to the next level.
+            </motion.p>
+          </div>
 
-              {/* Job Header */}
-              <div className="relative z-10 mb-4">
-                <h2
-                  className={cn(
-                    "text-xl font-medium mb-2 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-white group-hover:to-[#E23E6B] transition-all duration-300",
-                    poppins.className,
-                  )}
-                >
-                  {job.title}
-                </h2>
-
-                {/* Company & Location */}
-                <div className="flex items-center text-gray-300/80 text-sm mb-2">
-                  <Building2 className="w-4 h-4 mr-2 text-[#E23E6B]" />
-                  <span className="font-medium">{job.company}</span>
-                </div>
-
-                <div className="flex items-center text-gray-300/70 text-sm mb-2">
-                  <MapPin className="w-4 h-4 mr-2 text-[#E23E6B]" />
-                  <span>{job.location || `${job.city}, ${job.country}`}</span>
-                </div>
-
-                <div className="flex items-center text-gray-300/70 text-sm">
-                  <Calendar className="w-4 h-4 mr-2 text-[#E23E6B]" />
-                  <span>{new Date(job.date).toLocaleDateString()}</span>
-                </div>
-              </div>
-
-              {/* Tags */}
-              {job.tags && job.tags.length > 0 && (
-                <div className="flex flex-wrap gap-2 mb-6">
-                  {job.tags.slice(0, 4).map((tag, tagIndex) => (
-                    <motion.span
-                      key={tagIndex}
-                      className="px-3 py-1 bg-gradient-to-r from-[#E23E6B]/20 to-[#cc4368]/20 border border-[#E23E6B]/30 text-xs rounded-full text-gray-200 backdrop-blur-sm"
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 0.2 + tagIndex * 0.1 }}
-                    >
-                      {tag}
-                    </motion.span>
-                  ))}
-                  {job.tags.length > 4 && (
-                    <span className="px-3 py-1 bg-white/10 border border-white/20 text-xs rounded-full text-gray-300">
-                      +{job.tags.length - 4} more
-                    </span>
-                  )}
-                </div>
-              )}
-
-              {/* Apply Button */}
-              <div className="mt-auto pt-4 space-y-3">
-                <motion.button
-                  onClick={() => handleViewDetails(job)}
-                  className="inline-flex items-center justify-center w-full px-6 py-3 bg-white/10 border border-white/20 text-white font-medium rounded-2xl hover:bg-white/20 transition-all duration-300 group/button"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <Eye className="w-4 h-4 mr-2 group-hover/button:scale-110 transition-transform duration-300" />
-                  <span>View Details</span>
-                </motion.button>
-                
-                <motion.button
-                  onClick={() => handleApplyNow(job)}
-                  className="inline-flex items-center justify-center w-full px-6 py-3 bg-gradient-to-r from-[#E23E6B] to-[#cc4368] text-white font-medium rounded-2xl hover:from-[#cc4368] hover:to-[#E23E6B] transition-all duration-300 group/button"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <span className="mr-2">Apply Now</span>
-                  <ExternalLink className="w-4 h-4 group-hover/button:translate-x-1 transition-transform duration-300" />
-                </motion.button>
-              </div>
-            </motion.div>
-          ))}
+          <div className="flex items-center gap-4 mt-6 lg:mt-0">
+            <Link href="/dashboard">
+              <motion.button
+                className="flex items-center space-x-3 px-6 py-3 bg-white/10 border border-white/20 text-white font-medium rounded-2xl hover:bg-white/20 transition-all duration-300 shadow-lg hover:shadow-xl"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>Back to Dashboard</span>
+              </motion.button>
+            </Link>
+            <WalletDisplay />
+          </div>
         </motion.div>
 
-        {/* Empty State */}
-        {jobs.length === 0 && !loading && (
+        {loading ? (
           <motion.div
-            className="text-center py-16"
+            className="flex flex-col items-center justify-center py-20"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5 }}
           >
-            <div className="text-gray-400 text-lg mb-4">No jobs found at the moment</div>
-            <div className="text-gray-500 text-sm">Check back later for new opportunities</div>
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
+              className="w-16 h-16 border-4 border-white/20 border-t-[#E23E6B] rounded-full mb-6"
+            />
+            <p className="text-gray-300 text-lg font-light">Loading opportunities...</p>
+          </motion.div>
+        ) : error ? (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white/5 backdrop-blur-md border border-white/20 rounded-3xl p-8 text-center group overflow-hidden relative"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-white to-[#E23E6B] opacity-0 group-hover:opacity-10 transition-opacity duration-300 rounded-3xl"></div>
+            <div className="relative z-10">
+              <p className="text-red-400 text-lg mb-6">{error}</p>
+              <motion.button
+                onClick={() => window.location.reload()}
+                className="px-6 py-3 bg-gradient-to-r from-[#E23E6B] to-[#cc4368] rounded-2xl font-medium hover:from-[#cc4368] hover:to-[#E23E6B] transition-all duration-300"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                Try Again
+              </motion.button>
+            </div>
+          </motion.div>
+        ) : (
+          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+            {jobs.map((job, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                whileHover={{
+                  y: -12,
+                  scale: 1.03,
+                  transition: { duration: 0.4, ease: "easeInOut" },
+                }}
+                className="bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-8 group overflow-hidden relative hover:border-white/20 transition-all duration-500"
+              >
+                {/* Gradient overlay */}
+                <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-[#E23E6B]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl"></div>
+
+                {/* Glow effect */}
+                <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-[#E23E6B]/20 to-[#cc4368]/20 opacity-0 group-hover:opacity-20 blur-xl transition-opacity duration-500"></div>
+
+                <div className="relative z-10">
+                  {/* Header with icon */}
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="w-12 h-12 bg-gradient-to-br from-white/10 to-white/5 rounded-2xl flex items-center justify-center border border-white/10 group-hover:border-white/20 transition-colors duration-300">
+                      <Briefcase className="h-6 w-6 text-[#E23E6B]" />
+                    </div>
+                  </div>
+
+                  {/* Job Title */}
+                  <h3 className="font-semibold text-xl mb-3 line-clamp-2 text-white group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-white group-hover:to-[#E23E6B] transition-all duration-300">
+                    {job.title}
+                  </h3>
+
+                  {/* Company */}
+                  <p className="text-gray-300 text-lg font-medium mb-4">{job.company}</p>
+
+                  {/* Location */}
+                  <div className="flex items-center gap-2 mb-6 p-3 bg-white/5 rounded-2xl border border-white/10">
+                    <MapPin className="h-4 w-4 text-[#E23E6B]" />
+                    <span className="text-gray-300 text-sm">{job.location}</span>
+                  </div>
+
+                  {/* Apply Button */}
+                  <Link href={job.apply_url} target="_blank" rel="noopener noreferrer">
+                    <motion.button
+                      className="w-full py-4 bg-gradient-to-r from-[#E23E6B] to-[#cc4368] text-white font-medium rounded-2xl hover:from-[#cc4368] hover:to-[#E23E6B] transition-all duration-300 shadow-lg hover:shadow-xl group/btn relative overflow-hidden"
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300"></div>
+                      <div className="relative flex items-center justify-center gap-2">
+                        <span>Apply Now</span>
+                        <ExternalLink className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform duration-300" />
+                      </div>
+                    </motion.button>
+                  </Link>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
+
+        {/* Empty state */}
+        {!loading && !error && jobs.length === 0 && (
+          <motion.div
+            className="text-center py-12"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6, duration: 0.5 }}
+          >
+            <Briefcase className="w-16 h-16 text-gray-500 mx-auto mb-4" />
+            <h3 className={cn("text-xl font-thin mb-2", poppins.className)}>No Jobs Available</h3>
+            <p className="text-gray-400 mb-6">Check back later for new opportunities!</p>
           </motion.div>
         )}
       </div>

@@ -53,6 +53,7 @@ function ProposalCard({
     const fetchMetadata = async () => {
       try {
         const data = await getFromPinata(proposal.proposalUri)
+        // @ts-ignore
         setMetadata(data as ProposalMetadata)
       } catch (error) {
         console.error("Failed to fetch proposal metadata:", error)
@@ -197,6 +198,7 @@ function ProposalsList({ gigId, proposals, gigDetails }: ProposalsListProps) {
         address: FREELANCE_CONTRACT_ADDRESS,
         abi: FREELANCE_ABI,
         functionName: "selectFreelancer",
+        // @ts-ignore
         args: [BigInt(gigId), freelancer],
       })
 

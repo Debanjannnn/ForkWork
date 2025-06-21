@@ -557,18 +557,20 @@ function SubmitBountyComponent({ bountyId }: { bountyId: string }) {
           </motion.h1>
           <motion.p className="text-gray-300/80 text-lg font-light">{bounty.name}</motion.p>
         </div>
-        <div className="flex items-center gap-4">
-          <WalletDisplay />
-          <Link href={`/dashboard/bounties/${bountyId}`}>
-            <motion.button
-              className="flex items-center space-x-3 px-6 py-3 bg-gradient-to-r from-[#E23E6B] to-[#cc4368] text-white font-medium rounded-2xl hover:from-[#cc4368] hover:to-[#E23E6B] transition-all duration-300 shadow-md"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Back to Bounty</span>
-            </motion.button>
-          </Link>
+        <div className="flex justify-end items-center gap-4">
+          <div className="flex items-center gap-4">
+            <WalletDisplay />
+            <Link href={`/dashboard/bounties/${bountyId}`}>
+              <motion.button
+                className="flex items-center space-x-3 px-6 py-3 bg-gradient-to-r from-[#E23E6B] to-[#cc4368] text-white font-medium rounded-2xl hover:from-[#cc4368] hover:to-[#E23E6B] transition-all duration-300 shadow-md"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>Back to Bounty</span>
+              </motion.button>
+            </Link>
+          </div>
         </div>
       </motion.div>
 
