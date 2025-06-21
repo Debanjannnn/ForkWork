@@ -1,7 +1,8 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { motion, AnimatePresence, useScroll } from "motion/react"
+import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Poppins } from "next/font/google"
 import { Sparkles, Wallet, LogOut, Copy, Check } from "lucide-react"
@@ -33,12 +34,24 @@ export const FloatingNav = ({
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
   const [showWalletModal, setShowWalletModal] = useState(false)
   const [copied, setCopied] = useState(false)
+  const router = useRouter()
 
   const { isConnected, address, disconnect, isConnecting } = useWallet()
 
   React.useEffect(() => {
     setIsVisible(true)
   }, [])
+
+  // Redirect to dashboard when wallet connects
+  useEffect(() => {
+    if (isConnected && address) {
+      // Only redirect if we're not already on the dashboard or a dashboard sub-page
+      const currentPath = window.location.pathname
+      if (!currentPath.startsWith('/dashboard')) {
+        router.push('/dashboard')
+      }
+    }
+  }, [isConnected, address, router])
 
   const getScale = (index: number) => {
     if (hoveredIndex === null) return 1
