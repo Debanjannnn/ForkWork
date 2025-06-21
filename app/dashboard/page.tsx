@@ -18,9 +18,11 @@ import {
   Award,
   ChevronRight,
   Calendar,
+  Github,
 } from "lucide-react"
 import Link from "next/link"
 import { UserButton } from "@civic/auth/react"
+import { useState, useEffect } from "react"
 
 const poppins = Poppins({
   weight: ["400", "500", "600", "700"],
@@ -30,6 +32,41 @@ const poppins = Poppins({
 })
 
 export default function Dashboard() {
+  const [githubUsername, setGithubUsername] = useState("")
+  const [showCalendar, setShowCalendar] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+
+  // Load username from localStorage on component mount
+  useEffect(() => {
+    const savedUsername = localStorage.getItem("githubUsername")
+    if (savedUsername) {
+      setGithubUsername(savedUsername)
+      setShowCalendar(true)
+    }
+  }, [])
+
+  const handleUsernameSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!githubUsername.trim()) return
+
+    setIsLoading(true)
+    
+    // Save to localStorage
+    localStorage.setItem("githubUsername", githubUsername.trim())
+    
+    // Simulate loading time for better UX
+    setTimeout(() => {
+      setShowCalendar(true)
+      setIsLoading(false)
+    }, 1000)
+  }
+
+  const handleResetUsername = () => {
+    localStorage.removeItem("githubUsername")
+    setGithubUsername("")
+    setShowCalendar(false)
+  }
+
   const cardVariants: Variants = {
     initial: { opacity: 0, y: 20 },
     animate: (index: number) => ({
@@ -189,72 +226,136 @@ export default function Dashboard() {
           })}
         </motion.div>
 
+        {/* GitHub Username Input Form */}
+        {!showCalendar && (
+          <motion.div
+            className="bg-white/5 backdrop-blur-md border border-white/20 rounded-3xl p-8 mb-12"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3, duration: 0.5 }}
+          >
+            <div className="text-center max-w-md mx-auto">
+              <div className="w-20 h-20 bg-gradient-to-r from-[#E23E6B] to-[#cc4368] rounded-3xl flex items-center justify-center mx-auto mb-6">
+                <Github className="w-10 h-10 text-white" />
+              </div>
+              <h2 className={cn("text-2xl font-thin mb-4", poppins.className)}>
+                Connect Your GitHub
+              </h2>
+              <p className="text-gray-300/70 mb-8 font-light">
+                Enter your GitHub username to display your contribution activity
+              </p>
+              
+              <form onSubmit={handleUsernameSubmit} className="space-y-4">
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={githubUsername}
+                    onChange={(e) => setGithubUsername(e.target.value)}
+                    placeholder="Enter GitHub username"
+                    className="w-full px-6 py-4 bg-white/10 border border-white/20 rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:border-[#E23E6B] focus:ring-2 focus:ring-[#E23E6B]/20 transition-all duration-300"
+                    required
+                  />
+                </div>
+                
+                <motion.button
+                  type="submit"
+                  disabled={isLoading || !githubUsername.trim()}
+                  className="w-full px-6 py-4 bg-gradient-to-r from-[#E23E6B] to-[#cc4368] text-white font-medium rounded-2xl hover:from-[#cc4368] hover:to-[#E23E6B] transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                  whileHover={{ scale: isLoading ? 1 : 1.02 }}
+                  whileTap={{ scale: isLoading ? 1 : 0.98 }}
+                >
+                  {isLoading ? (
+                    <div className="flex items-center justify-center">
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                      Loading...
+                    </div>
+                  ) : (
+                    "Show Contributions"
+                  )}
+                </motion.button>
+              </form>
+            </div>
+          </motion.div>
+        )}
+
         {/* GitHub Calendar - Full Width */}
-        <motion.div
-          className="bg-white/5 backdrop-blur-md border border-white/20 rounded-3xl p-8 group overflow-hidden relative mb-12"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.5 }}
-        >
-          <div className="absolute inset-0 bg-gradient-to-br from-white to-[#E23E6B] opacity-0 group-hover:opacity-10 transition-opacity duration-300 rounded-3xl"></div>
-          <div className="relative z-10">
-            <div className="flex items-center justify-between mb-8">
-              <div className="flex items-center">
-                <div className="w-12 h-12 bg-gradient-to-r from-[#E23E6B] to-[#cc4368] rounded-2xl flex items-center justify-center mr-4">
-                  <Calendar className="w-6 h-6 text-white" />
+        {showCalendar && (
+          <motion.div
+            className="bg-white/5 backdrop-blur-md border border-white/20 rounded-3xl p-8 group overflow-hidden relative mb-12"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3, duration: 0.5 }}
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-white to-[#E23E6B] opacity-0 group-hover:opacity-10 transition-opacity duration-300 rounded-3xl"></div>
+            <div className="relative z-10">
+              <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center">
+                  <div className="w-12 h-12 bg-gradient-to-r from-[#E23E6B] to-[#cc4368] rounded-2xl flex items-center justify-center mr-4">
+                    <Calendar className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h2
+                      className={cn(
+                        "text-2xl font-thin group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-t group-hover:from-white group-hover:to-[#E23E6B] transition-colors duration-300",
+                        poppins.className,
+                      )}
+                    >
+                      Development Activity
+                    </h2>
+                    <p className="text-gray-400 text-sm font-light">
+                      {githubUsername}'s coding journey visualized
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h2
-                    className={cn(
-                      "text-2xl font-thin group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-t group-hover:from-white group-hover:to-[#E23E6B] transition-colors duration-300",
-                      poppins.className,
-                    )}
+                <div className="flex items-center gap-4">
+                  <div className="text-right">
+                    <div className="text-2xl font-thin text-[#E23E6B] mb-1">365</div>
+                    <div className="text-xs text-gray-400">Days tracked</div>
+                  </div>
+                  <button
+                    onClick={handleResetUsername}
+                    className="px-4 py-2 text-sm text-gray-400 hover:text-white border border-white/20 rounded-xl hover:border-[#E23E6B] transition-all duration-300"
                   >
-                    Development Activity
-                  </h2>
-                  <p className="text-gray-400 text-sm font-light">Your coding journey visualized</p>
+                    Change User
+                  </button>
                 </div>
               </div>
-              <div className="text-right">
-                <div className="text-2xl font-thin text-[#E23E6B] mb-1">365</div>
-                <div className="text-xs text-gray-400">Days tracked</div>
-              </div>
-            </div>
 
-            <div className="w-full">
-              <div className="flex justify-center">
-                <GitHubCalendar
-                  username="debanjannnn"
-                  blockSize={12}
-                  blockMargin={4}
-                  fontSize={12}
-                  theme={{
-                    light: ["#161b22", "#0e4429", "#006d32", "#26a641", "#39d353"],
-                    dark: ["#161b22", "#0e4429", "#006d32", "#26a641", "#39d353"],
-                  }}
-                  style={{
-                    color: "#E23E6B",
-                  }}
-                />
-              </div>
-            </div>
-
-            <div className="mt-6 flex items-center justify-between text-sm">
-              <div className="flex items-center space-x-4">
-                <span className="text-gray-400">Less</span>
-                <div className="flex space-x-1">
-                  <div className="w-3 h-3 bg-gray-800 rounded-sm"></div>
-                  <div className="w-3 h-3 bg-green-900 rounded-sm"></div>
-                  <div className="w-3 h-3 bg-green-700 rounded-sm"></div>
-                  <div className="w-3 h-3 bg-green-500 rounded-sm"></div>
-                  <div className="w-3 h-3 bg-green-400 rounded-sm"></div>
+              <div className="w-full">
+                <div className="flex justify-center">
+                  <GitHubCalendar
+                    username={githubUsername}
+                    blockSize={12}
+                    blockMargin={4}
+                    fontSize={12}
+                    theme={{
+                      light: ["#161b22", "#0e4429", "#006d32", "#26a641", "#39d353"],
+                      dark: ["#161b22", "#0e4429", "#006d32", "#26a641", "#39d353"],
+                    }}
+                    style={{
+                      color: "#E23E6B",
+                    }}
+                  />
                 </div>
-                <span className="text-gray-400">More</span>
               </div>
-              <div className="text-gray-400">Learn how we count contributions</div>
+
+              <div className="mt-6 flex items-center justify-between text-sm">
+                <div className="flex items-center space-x-4">
+                  <span className="text-gray-400">Less</span>
+                  <div className="flex space-x-1">
+                    <div className="w-3 h-3 bg-gray-800 rounded-sm"></div>
+                    <div className="w-3 h-3 bg-green-900 rounded-sm"></div>
+                    <div className="w-3 h-3 bg-green-700 rounded-sm"></div>
+                    <div className="w-3 h-3 bg-green-500 rounded-sm"></div>
+                    <div className="w-3 h-3 bg-green-400 rounded-sm"></div>
+                  </div>
+                  <span className="text-gray-400">More</span>
+                </div>
+                <div className="text-gray-400">Learn how we count contributions</div>
+              </div>
             </div>
-          </div>
-        </motion.div>
+          </motion.div>
+        )}
 
         {/* Enhanced Opportunity Cards */}
         <motion.div

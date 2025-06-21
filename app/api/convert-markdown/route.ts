@@ -6,6 +6,7 @@ function basicMarkdownConversion(text: string): string {
   const lines = text.split('\n')
   let markdown = ''
   let inList = false
+  let inCodeBlock = false
   
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim()
@@ -14,10 +15,26 @@ function basicMarkdownConversion(text: string): string {
       if (inList) {
         markdown += '\n'
         inList = false
-      } else {
+      } else if (!inCodeBlock) {
         markdown += '\n'
       }
       continue
+    }
+    
+    // Detect code blocks
+    if (line.startsWith('```') || line.includes('function') || line.includes('const') || line.includes('import') || line.includes('export')) {
+      if (!inCodeBlock) {
+        markdown += '```\n'
+        inCodeBlock = true
+      }
+      markdown += `${line}\n`
+      continue
+    }
+    
+    // End code block if we're in one and hit a non-code line
+    if (inCodeBlock && !line.includes('function') && !line.includes('const') && !line.includes('import') && !line.includes('export')) {
+      markdown += '```\n\n'
+      inCodeBlock = false
     }
     
     // Detect and format headers
@@ -26,10 +43,20 @@ function basicMarkdownConversion(text: string): string {
       continue
     }
     
-    // Detect task-like items
-    if (line.toLowerCase().includes('task') || line.toLowerCase().includes('requirement') || line.toLowerCase().includes('deliverable')) {
+    // Detect main sections
+    if (line.toLowerCase().includes('task') || line.toLowerCase().includes('requirement') || line.toLowerCase().includes('deliverable') || line.toLowerCase().includes('overview')) {
       if (!inList) {
         markdown += `## ${line}\n\n`
+      } else {
+        markdown += `- ${line}\n`
+      }
+      continue
+    }
+    
+    // Detect subsections
+    if (line.toLowerCase().includes('step') || line.toLowerCase().includes('phase') || line.toLowerCase().includes('part')) {
+      if (!inList) {
+        markdown += `### ${line}\n\n`
       } else {
         markdown += `- ${line}\n`
       }
@@ -56,9 +83,25 @@ function basicMarkdownConversion(text: string): string {
       continue
     }
     
-    // Detect code-like content
-    if (line.includes('function') || line.includes('const') || line.includes('import') || line.includes('export')) {
-      markdown += `\`${line}\`\n\n`
+    // Detect task checkboxes
+    if (line.toLowerCase().includes('todo') || line.toLowerCase().includes('task') || line.toLowerCase().includes('check')) {
+      if (!inList) {
+        markdown += '\n'
+        inList = true
+      }
+      markdown += `- [ ] ${line}\n`
+      continue
+    }
+    
+    // Detect emphasis words
+    if (line.includes('important') || line.includes('required') || line.includes('must') || line.includes('should')) {
+      const emphasizedLine = line.replace(/\b(important|required|must|should)\b/gi, '**$1**')
+      if (!inList) {
+        markdown += `${emphasizedLine}\n\n`
+      } else {
+        markdown += `${emphasizedLine}\n`
+        inList = false
+      }
       continue
     }
     
@@ -69,6 +112,11 @@ function basicMarkdownConversion(text: string): string {
       markdown += `${line}\n`
       inList = false
     }
+  }
+  
+  // Close any open code block
+  if (inCodeBlock) {
+    markdown += '```\n\n'
   }
   
   return markdown.trim()
@@ -95,13 +143,14 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    const ai = new GoogleGenAI({
-      apiKey: process.env.GEMINI_API_KEY    
-    })
+    try {
+      const ai = new GoogleGenAI({
+        apiKey: process.env.GEMINI_API_KEY    
+      })
 
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: `You are a markdown formatting expert. Convert the following text into clean, well-structured markdown for a bounty description. 
+      const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: `You are a markdown formatting expert. Convert the following text into clean, well-structured markdown for a bounty description. 
 
 IMPORTANT RULES:
 1. ONLY format the existing text - do not add any new content
@@ -125,34 +174,40 @@ Original text to convert:
 ${text}
 
 Convert to markdown:`,
-    })
+      })
 
-    const markdownText = response.text
+      const markdownText = response.text
 
-    if (!markdownText) {
-      return NextResponse.json(
-        { error: 'No response from AI' },
-        { status: 500 }
-      )
+      if (!markdownText) {
+        throw new Error('No response from AI')
+      }
+
+      // Clean up the response to ensure it's just the markdown
+      const cleanedMarkdown = markdownText.trim()
+        .replace(/^```markdown\s*/i, '') // Remove markdown code block wrapper if present
+        .replace(/```\s*$/i, '') // Remove trailing code block wrapper
+        .trim()
+
+      return NextResponse.json({ markdown: cleanedMarkdown })
+    } catch (aiError) {
+      console.error('AI conversion failed, falling back to basic conversion:', aiError)
+      // If AI fails, fall back to basic conversion
+      const markdown = basicMarkdownConversion(text)
+      return NextResponse.json({ 
+        markdown,
+        note: 'AI conversion failed, using basic conversion'
+      })
     }
-
-    // Clean up the response to ensure it's just the markdown
-    const cleanedMarkdown = markdownText.trim()
-      .replace(/^```markdown\s*/i, '') // Remove markdown code block wrapper if present
-      .replace(/```\s*$/i, '') // Remove trailing code block wrapper
-      .trim()
-
-    return NextResponse.json({ markdown: cleanedMarkdown })
   } catch (error) {
     console.error('Error converting to markdown:', error)
     
-    // If AI fails, fall back to basic conversion
+    // If everything fails, try basic conversion as last resort
     try {
       const { text } = await request.json()
       const markdown = basicMarkdownConversion(text)
       return NextResponse.json({ 
         markdown,
-        note: 'AI conversion failed, using basic conversion'
+        note: 'Using basic conversion due to error'
       })
     } catch (fallbackError) {
       return NextResponse.json(

@@ -99,6 +99,8 @@ interface FormData {
   description: string
   category: string
   deadline: string
+  deadlineDate: string
+  deadlineTime: string
   totalReward: string
 }
 
@@ -119,6 +121,8 @@ export default function PostBounty() {
     description: "",
     category: "",
     deadline: "",
+    deadlineDate: "",
+    deadlineTime: "",
     totalReward: "",
   })
   const [ipfsUri, setIpfsUri] = useState("")
@@ -219,8 +223,15 @@ export default function PostBounty() {
     }
 
     // Validate form
-    if (!formData.name || !formData.description || !formData.category || !formData.deadline || !formData.totalReward) {
+    if (!formData.name || !formData.description || !formData.category || !formData.deadlineDate || !formData.deadlineTime || !formData.totalReward) {
       setError("Please fill in all fields")
+      return
+    }
+
+    // Check if time is properly set (both hours and minutes)
+    const [hours, minutes] = formData.deadlineTime.split(':')
+    if (!hours || !minutes) {
+      setError("Please select both hours and minutes for the deadline")
       return
     }
 
@@ -324,12 +335,22 @@ export default function PostBounty() {
     }
   }, [createError])
 
+  // Update deadline when date or time changes
+  useEffect(() => {
+    if (formData.deadlineDate && formData.deadlineTime) {
+      const combinedDateTime = `${formData.deadlineDate}T${formData.deadlineTime}`
+      setFormData(prev => ({ ...prev, deadline: combinedDateTime }))
+    }
+  }, [formData.deadlineDate, formData.deadlineTime])
+
   const resetForm = () => {
     setFormData({
       name: "",
       description: "",
       category: "",
       deadline: "",
+      deadlineDate: "",
+      deadlineTime: "",
       totalReward: "",
     })
     setCurrentStep(CreateStep.FORM)
@@ -1024,21 +1045,74 @@ export default function PostBounty() {
                       📅 Deadline
                       <span className="text-red-400">*</span>
                     </label>
-                    <div className="relative">
-                      <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                      <input
-                        type="datetime-local"
-                        value={formData.deadline}
-                        onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
-                        min={new Date().toISOString().slice(0, 16)}
-                        className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/20 rounded-2xl text-white focus:outline-none focus:border-[#E23E6B] focus:ring-2 focus:ring-[#E23E6B]/20 transition-all duration-200"
-                        required
-                      />
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <div className="relative">
+                        <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                        <input
+                          type="date"
+                          value={formData.deadlineDate}
+                          onChange={(e) => setFormData({ ...formData, deadlineDate: e.target.value })}
+                          min={new Date().toISOString().split('T')[0]}
+                          className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/20 rounded-2xl text-white focus:outline-none focus:border-[#E23E6B] focus:ring-2 focus:ring-[#E23E6B]/20 transition-all duration-200 [&::-webkit-calendar-picker-indicator]:filter [&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:opacity-50 [&::-webkit-calendar-picker-indicator]:hover:opacity-100"
+                          required
+                        />
+                      </div>
+                      <div className="relative">
+                        <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                        <input
+                          type="number"
+                          min="0"
+                          max="23"
+                          placeholder="Hour"
+                          value={formData.deadlineTime.split(':')[0] || ''}
+                          onChange={(e) => {
+                            const hours = (e.target.value || '0').padStart(2, '0')
+                            const currentTime = formData.deadlineTime || '00:00'
+                            const [_, minutes] = currentTime.split(':')
+                            const newTime = `${hours}:${minutes || '00'}`
+                            setFormData({ ...formData, deadlineTime: newTime })
+                          }}
+                          className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/20 rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:border-[#E23E6B] focus:ring-2 focus:ring-[#E23E6B]/20 transition-all duration-200"
+                          required
+                        />
+                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm">
+                          hr
+                        </div>
+                      </div>
+                      <div className="relative">
+                        <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                        <input
+                          type="number"
+                          min="0"
+                          max="59"
+                          placeholder="Minute"
+                          value={formData.deadlineTime.split(':')[1] || ''}
+                          onChange={(e) => {
+                            const minutes = (e.target.value || '0').padStart(2, '0')
+                            const currentTime = formData.deadlineTime || '00:00'
+                            const [hours] = currentTime.split(':')
+                            const newTime = `${hours || '00'}:${minutes}`
+                            setFormData({ ...formData, deadlineTime: newTime })
+                          }}
+                          className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/20 rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:border-[#E23E6B] focus:ring-2 focus:ring-[#E23E6B]/20 transition-all duration-200"
+                          required
+                        />
+                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm">
+                          min
+                        </div>
+                      </div>
                     </div>
                     <p className="text-sm text-gray-400 flex items-center gap-1">
-                      <Clock className="w-4 h-4" />
-                      Must be a future date and time
+                      <Info className="w-4 h-4" />
+                      Must be a future date and time (24-hour format)
                     </p>
+                    {formData.deadline && (
+                      <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-3">
+                        <p className="text-sm text-green-400">
+                          Deadline set for: <span className="font-medium">{new Date(formData.deadline).toLocaleString()}</span>
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
 
