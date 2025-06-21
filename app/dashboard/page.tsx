@@ -80,7 +80,7 @@ export default function Dashboard() {
       icon: Shield,
       features: ["Token staking", "Trust mechanism", "Commitment guarantee"],
       status: "3 Pending",
-      href: "/staked-commitments",
+      href: "dashboard/Staking",
       gradient: "from-blue-500 to-blue-700",
     },
     {
@@ -132,19 +132,21 @@ export default function Dashboard() {
             </motion.p>
           </div>
 
-          <div className="flex items-center space-x-4">
-            <UserButton/>
-            <WalletDisplay />
-            <Link href="/">
-              <motion.button
-                className="flex items-center space-x-3 px-8 py-4 bg-gradient-to-r from-[#E23E6B] to-[#cc4368] text-white font-medium rounded-3xl hover:from-[#cc4368] hover:to-[#E23E6B] transition-all duration-300 shadow-lg hover:shadow-xl"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <ArrowLeft className="w-5 h-5" />
-                <span>Back to Home</span>
-              </motion.button>
-            </Link>
+          <div className="flex justify-end items-center gap-4">
+            <div className="flex items-center gap-4">
+              <UserButton/>
+              <WalletDisplay />
+              <Link href="/">
+                <motion.button
+                  className="flex items-center space-x-3 px-6 py-3 bg-gradient-to-r from-[#E23E6B] to-[#cc4368] text-white font-medium rounded-2xl hover:from-[#cc4368] hover:to-[#E23E6B] transition-all duration-300 shadow-lg hover:shadow-xl"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  <span>Back to Home</span>
+                </motion.button>
+              </Link>
+            </div>
           </div>
         </motion.div>
 
