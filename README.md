@@ -7,6 +7,9 @@
 [![Next.js](https://img.shields.io/badge/Next.js-15.3.4-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
 [![Solidity](https://img.shields.io/badge/Solidity-0.8.19-363636?style=for-the-badge&logo=solidity)](https://soliditylang.org/)
 
+![image](https://github.com/user-attachments/assets/8684fedb-4309-4df5-8fac-ceee8a5e50b0)
+
+
 A revolutionary Web3 platform that connects talented freelancers with clients through smart contracts, eliminating traditional platform fees and middlemen. Built on blockchain technology, Fork Work ensures transparency, security, and fair compensation for all parties involved.
 
 ## ✨ Features
