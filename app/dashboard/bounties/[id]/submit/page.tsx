@@ -19,16 +19,13 @@ import {
   Zap,
   Sparkles,
   Terminal,
-  Plus,
-  Trash2,
-  Users,
-  LinkIcon,
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { BOUNTY_CONTRACT_ADDRESS, BOUNTY_ABI } from "@/lib/contracts"
 import { useWallet } from "@/contexts/wallet-context"
 import { AuroraText } from "@/components/magicui/aurora-text"
+import { WalletDisplay } from "@/components/ui/wallet-display"
 
 const poppins = Poppins({
   weight: ["400", "500", "600", "700"],
@@ -37,66 +34,23 @@ const poppins = Poppins({
   variable: "--font-poppins",
 })
 
-// Types for form data
-interface TeamMember {
-  name: string
-  role: string
-  github?: string
-  wallet?: string
-}
-
-interface ProjectLink {
-  type: "demo" | "repository" | "documentation" | "video" | "other"
-  url: string
-  description: string
-}
-
-interface CodeFile {
-  filename: string
-  language: string
-  code: string
-  description?: string
-}
-
-interface SubmissionFormData {
-  // Project Information
-  title: string
-  description: string
-  approach: string
-
-  // Team Information
-  teamMembers: TeamMember[]
-
-  // Code Files
-  codeFiles: CodeFile[]
-
-  // Links
-  projectLinks: ProjectLink[]
-
-  // Setup & Usage
-  installationSteps: string[]
-  usageInstructions: string
-
-  // Additional Information
-  challenges: string
-  futurePlans: string
-  additionalNotes: string
-}
-
-// Mock IPFS upload functions
+// Mock IPFS upload function - replace with your actual implementation
 const uploadCodeToIPFS = async (code: string, filename: string): Promise<string> => {
+  // Simulate upload delay
   await new Promise((resolve) => setTimeout(resolve, 1000 + Math.random() * 2000))
+  // Return mock IPFS hash
   return `ipfs://Qm${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`
 }
 
 const uploadMetadataToIPFS = async (metadata: any): Promise<string> => {
+  // Simulate upload delay
   await new Promise((resolve) => setTimeout(resolve, 1500))
+  // Return mock IPFS hash
   return `ipfs://Qm${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`
 }
 
 enum SubmissionStep {
   FORM = "form",
-  PREVIEW = "preview",
   PROCESSING = "processing",
   UPLOADING = "uploading",
   SUBMITTING = "submitting",
@@ -120,30 +74,14 @@ interface ParsedSubmission {
   }
 }
 
-export default function SubmitBounty() {
+function SubmitBountyComponent({ bountyId }: { bountyId: string }) {
   const router = useRouter()
   const { address, isConnected } = useWallet()
 
-  const params = useParams()
-  const bountyId = params?.id as string
-
   // Form state
   const [currentStep, setCurrentStep] = useState<SubmissionStep>(SubmissionStep.FORM)
-  const [formData, setFormData] = useState<SubmissionFormData>({
-    title: "",
-    description: "",
-    approach: "",
-    teamMembers: [{ name: "", role: "", github: "", wallet: address || "" }],
-    codeFiles: [{ filename: "", language: "javascript", code: "", description: "" }],
-    projectLinks: [],
-    installationSteps: [""],
-    usageInstructions: "",
-    challenges: "",
-    futurePlans: "",
-    additionalNotes: "",
-  })
-
-  const [generatedMarkdown, setGeneratedMarkdown] = useState("")
+  const [showPreview, setShowPreview] = useState(false)
+  const [markdownInput, setMarkdownInput] = useState("")
   const [parsedSubmission, setParsedSubmission] = useState<ParsedSubmission | null>(null)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [processingStatus, setProcessingStatus] = useState("")
@@ -175,98 +113,6 @@ export default function SubmitBounty() {
   const { data: hash, error: writeError, isPending, writeContract } = useWriteContract()
   const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({ hash })
 
-  // Generate markdown from form data
-  const generateMarkdown = (data: SubmissionFormData): string => {
-    let markdown = `# ${data.title || `Solution for Bounty #${bountyId}`}\n\n`
-
-    // Description
-    if (data.description) {
-      markdown += `## 📋 Project Description\n\n${data.description}\n\n`
-    }
-
-    // Approach
-    if (data.approach) {
-      markdown += `## 🔧 Technical Approach\n\n${data.approach}\n\n`
-    }
-
-    // Team Members
-    if (data.teamMembers.some((member) => member.name)) {
-      markdown += `## 👥 Team Members\n\n`
-      data.teamMembers.forEach((member) => {
-        if (member.name) {
-          markdown += `- **${member.name}**`
-          if (member.role) markdown += ` - ${member.role}`
-          if (member.github) markdown += ` ([GitHub](https://github.com/${member.github}))`
-          if (member.wallet) markdown += ` - \`${member.wallet}\``
-          markdown += "\n"
-        }
-      })
-      markdown += "\n"
-    }
-
-    // Code Implementation
-    if (data.codeFiles.some((file) => file.code)) {
-      markdown += `## 💻 Implementation\n\n`
-      data.codeFiles.forEach((file) => {
-        if (file.code) {
-          if (file.description) {
-            markdown += `### ${file.filename || "Code Block"}\n${file.description}\n\n`
-          }
-          markdown += `\`\`\`${file.language}\n${file.code}\n\`\`\`\n\n`
-        }
-      })
-    }
-
-    // Project Links
-    if (data.projectLinks.length > 0) {
-      markdown += `## 🔗 Project Links\n\n`
-      data.projectLinks.forEach((link) => {
-        const emoji = {
-          demo: "🚀",
-          repository: "📂",
-          documentation: "📚",
-          video: "🎥",
-          other: "🔗",
-        }[link.type]
-        markdown += `- ${emoji} **${link.type.charAt(0).toUpperCase() + link.type.slice(1)}**: [${link.description || link.url}](${link.url})\n`
-      })
-      markdown += "\n"
-    }
-
-    // Installation & Setup
-    if (data.installationSteps.some((step) => step.trim())) {
-      markdown += `## ⚙️ Installation & Setup\n\n`
-      data.installationSteps.forEach((step, index) => {
-        if (step.trim()) {
-          markdown += `${index + 1}. ${step}\n`
-        }
-      })
-      markdown += "\n"
-    }
-
-    // Usage Instructions
-    if (data.usageInstructions) {
-      markdown += `## 🚀 Usage Instructions\n\n${data.usageInstructions}\n\n`
-    }
-
-    // Challenges
-    if (data.challenges) {
-      markdown += `## 🎯 Challenges & Solutions\n\n${data.challenges}\n\n`
-    }
-
-    // Future Plans
-    if (data.futurePlans) {
-      markdown += `## 🔮 Future Enhancements\n\n${data.futurePlans}\n\n`
-    }
-
-    // Additional Notes
-    if (data.additionalNotes) {
-      markdown += `## 📝 Additional Notes\n\n${data.additionalNotes}\n\n`
-    }
-
-    return markdown
-  }
-
   // Parse markdown and extract code blocks
   const parseMarkdown = (markdown: string): ParsedSubmission => {
     const lines = markdown.split("\n")
@@ -283,12 +129,15 @@ export default function SubmitBounty() {
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i]
 
+      // Detect code block start
       if (line.startsWith("```")) {
         if (!inCodeBlock) {
+          // Starting a code block
           const language = line.slice(3).trim() || "text"
           currentCodeBlock = { language, code: "" }
           inCodeBlock = true
         } else {
+          // Ending a code block
           if (currentCodeBlock) {
             codeBlocks.push(currentCodeBlock)
             currentCodeBlock = null
@@ -303,6 +152,7 @@ export default function SubmitBounty() {
         continue
       }
 
+      // Parse sections
       if (line.toLowerCase().includes("approach") && line.startsWith("#")) {
         currentSection = "approach"
         continue
@@ -314,6 +164,7 @@ export default function SubmitBounty() {
         continue
       }
 
+      // Add content to appropriate section
       if (line.trim()) {
         switch (currentSection) {
           case "approach":
@@ -349,43 +200,46 @@ export default function SubmitBounty() {
 
   // Process submission and upload to IPFS
   const processSubmission = async () => {
-    const markdown = generateMarkdown(formData)
-    setGeneratedMarkdown(markdown)
+    if (!markdownInput.trim()) {
+      toast.error("Please provide your solution markdown")
+      return
+    }
 
     setCurrentStep(SubmissionStep.PROCESSING)
-    setProcessingStatus("Processing your submission...")
+    setProcessingStatus("Parsing your markdown submission...")
 
     try {
-      const parsed = parseMarkdown(markdown)
+      // Parse the markdown
+      const parsed = parseMarkdown(markdownInput)
       setParsedSubmission(parsed)
-
-      if (parsed.codeBlocks.length === 0) {
-        toast.error("No code blocks found in your submission. Please add at least one code file.")
-        setCurrentStep(SubmissionStep.FORM)
-        return
-      }
 
       setCurrentStep(SubmissionStep.UPLOADING)
       setUploadProgress(0)
-      setProcessingStatus("Uploading code blocks to IPFS...")
+      setProcessingStatus("Uploading submission to IPFS...")
 
+      // Upload code blocks to IPFS if any exist
       const uploadedBlocks: CodeBlock[] = []
-      for (let i = 0; i < parsed.codeBlocks.length; i++) {
-        const block = parsed.codeBlocks[i]
-        setProcessingStatus(`Uploading ${block.language} code block ${i + 1}/${parsed.codeBlocks.length}...`)
+      if (parsed.codeBlocks.length > 0) {
+        for (let i = 0; i < parsed.codeBlocks.length; i++) {
+          const block = parsed.codeBlocks[i]
+          setProcessingStatus(`Uploading ${block.language} code block ${i + 1}/${parsed.codeBlocks.length}...`)
 
-        const filename = `code-${i + 1}.${block.language}`
-        const ipfsHash = await uploadCodeToIPFS(block.code, filename)
+          const filename = `code-${i + 1}.${block.language}`
+          const ipfsHash = await uploadCodeToIPFS(block.code, filename)
 
-        uploadedBlocks.push({
-          ...block,
-          filename,
-          ipfsHash,
-        })
+          uploadedBlocks.push({
+            ...block,
+            filename,
+            ipfsHash,
+          })
 
-        setUploadProgress(((i + 1) / parsed.codeBlocks.length) * 70)
+          setUploadProgress(((i + 1) / parsed.codeBlocks.length) * 70)
+        }
+      } else {
+        setUploadProgress(70)
       }
 
+      // Create main metadata
       setProcessingStatus("Creating submission metadata...")
       const submissionMetadata = {
         bountyId: bountyId,
@@ -400,20 +254,21 @@ export default function SubmitBounty() {
           filename: block.filename,
           ipfsHash: block.ipfsHash,
         })),
-        originalMarkdown: markdown,
-        formData: formData,
+        originalMarkdown: markdownInput,
       }
 
       setUploadProgress(85)
       const mainUri = await uploadMetadataToIPFS(submissionMetadata)
       setMainIpfsUri(mainUri)
 
+      // Set evidence URIs (individual code block hashes)
       const evidenceHashes = uploadedBlocks.map((block) => block.ipfsHash!).filter(Boolean)
       setEvidenceUris(evidenceHashes)
 
       setUploadProgress(100)
       setProcessingStatus("Upload complete! Ready to submit...")
 
+      // Auto-proceed to submission
       setTimeout(() => {
         setCurrentStep(SubmissionStep.SUBMITTING)
         submitToBlockchain(mainUri, evidenceHashes)
@@ -432,91 +287,6 @@ export default function SubmitBounty() {
       functionName: "submitToBounty",
       args: [BigInt(bountyId), mainUri, evidenceHashes],
     })
-  }
-
-  // Form helper functions
-  const addTeamMember = () => {
-    setFormData((prev) => ({
-      ...prev,
-      teamMembers: [...prev.teamMembers, { name: "", role: "", github: "", wallet: "" }],
-    }))
-  }
-
-  const removeTeamMember = (index: number) => {
-    setFormData((prev) => ({
-      ...prev,
-      teamMembers: prev.teamMembers.filter((_, i) => i !== index),
-    }))
-  }
-
-  const updateTeamMember = (index: number, field: keyof TeamMember, value: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      teamMembers: prev.teamMembers.map((member, i) => (i === index ? { ...member, [field]: value } : member)),
-    }))
-  }
-
-  const addCodeFile = () => {
-    setFormData((prev) => ({
-      ...prev,
-      codeFiles: [...prev.codeFiles, { filename: "", language: "javascript", code: "", description: "" }],
-    }))
-  }
-
-  const removeCodeFile = (index: number) => {
-    setFormData((prev) => ({
-      ...prev,
-      codeFiles: prev.codeFiles.filter((_, i) => i !== index),
-    }))
-  }
-
-  const updateCodeFile = (index: number, field: keyof CodeFile, value: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      codeFiles: prev.codeFiles.map((file, i) => (i === index ? { ...file, [field]: value } : file)),
-    }))
-  }
-
-  const addProjectLink = () => {
-    setFormData((prev) => ({
-      ...prev,
-      projectLinks: [...prev.projectLinks, { type: "demo", url: "", description: "" }],
-    }))
-  }
-
-  const removeProjectLink = (index: number) => {
-    setFormData((prev) => ({
-      ...prev,
-      projectLinks: prev.projectLinks.filter((_, i) => i !== index),
-    }))
-  }
-
-  const updateProjectLink = (index: number, field: keyof ProjectLink, value: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      projectLinks: prev.projectLinks.map((link, i) => (i === index ? { ...link, [field]: value } : link)),
-    }))
-  }
-
-  const addInstallationStep = () => {
-    setFormData((prev) => ({
-      ...prev,
-      installationSteps: [...prev.installationSteps, ""],
-    }))
-  }
-
-  const removeInstallationStep = (index: number) => {
-    setFormData((prev) => ({
-      ...prev,
-      installationSteps: prev.installationSteps.filter((_, i) => i !== index),
-    }))
-  }
-
-  const updateInstallationStep = (index: number, value: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      installationSteps: prev.installationSteps.map((step, i) => (i === index ? value : step)),
-    }))
   }
 
   // Effects for handling transaction states
@@ -541,10 +311,55 @@ export default function SubmitBounty() {
     }
   }, [writeError])
 
-  // Update generated markdown when form data changes
-  useEffect(() => {
-    setGeneratedMarkdown(generateMarkdown(formData))
-  }, [formData])
+  // Render markdown preview
+  const renderMarkdownPreview = (markdown: string) => {
+    if (!markdown) return <p className="text-gray-400 italic">Preview will appear here...</p>
+
+    return (
+      <div className="prose prose-invert prose-sm max-w-none">
+        {markdown.split("\n").map((line, i) => {
+          if (line.startsWith("```")) {
+            return null // Code blocks handled separately in preview
+          }
+          if (line.startsWith("# ")) {
+            return (
+              <h1 key={i} className="text-2xl font-bold mt-6 mb-3 text-white">
+                {line.slice(2)}
+              </h1>
+            )
+          }
+          if (line.startsWith("## ")) {
+            return (
+              <h2 key={i} className="text-xl font-bold mt-5 mb-3 text-gray-200">
+                {line.slice(3)}
+              </h2>
+            )
+          }
+          if (line.startsWith("### ")) {
+            return (
+              <h3 key={i} className="text-lg font-semibold mt-4 mb-2 text-gray-300">
+                {line.slice(4)}
+              </h3>
+            )
+          }
+          if (line.startsWith("- ")) {
+            return (
+              <li key={i} className="ml-4 my-1 text-gray-300">
+                {line.slice(2)}
+              </li>
+            )
+          }
+          return line ? (
+            <p key={i} className="mb-3 text-gray-300 leading-relaxed">
+              {line}
+            </p>
+          ) : (
+            <br key={i} />
+          )
+        })}
+      </div>
+    )
+  }
 
   // Loading states
   if (isLoadingBounty || isLoadingHasSubmitted) {
@@ -725,653 +540,272 @@ export default function SubmitBounty() {
     )
   }
 
-  // Preview mode
-  if (currentStep === SubmissionStep.PREVIEW) {
+  return (
+    <div className="max-w-4xl mx-auto">
+      {/* Header */}
+      <motion.div
+        className="flex items-center justify-between mb-8"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <div>
+          <motion.h1 className="text-3xl md:text-4xl font-thin mb-2">
+            <AuroraText colors={["#cc4368", "#e6295c", "#ffffff", "#E23E6B"]}>
+              <span className="text-transparent">Submit Your Solution</span>
+            </AuroraText>
+          </motion.h1>
+          <motion.p className="text-gray-300/80 text-lg font-light">{bounty.name}</motion.p>
+        </div>
+        <div className="flex items-center gap-4">
+          <WalletDisplay />
+          <Link href={`/dashboard/bounties/${bountyId}`}>
+            <motion.button
+              className="flex items-center space-x-3 px-6 py-3 bg-gradient-to-r from-[#E23E6B] to-[#cc4368] text-white font-medium rounded-2xl hover:from-[#cc4368] hover:to-[#E23E6B] transition-all duration-300 shadow-md"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back to Bounty</span>
+            </motion.button>
+          </Link>
+        </div>
+      </motion.div>
+
+      {/* Instructions */}
+      <motion.div
+        className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-blue-500/20 rounded-3xl p-6 mb-8"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1, duration: 0.5 }}
+      >
+        <div className="flex items-start gap-4">
+          <div className="bg-blue-500/20 p-3 rounded-2xl">
+            <Sparkles className="w-6 h-6 text-blue-400" />
+          </div>
+          <div className="flex-1">
+            <h3 className="text-lg font-medium text-blue-400 mb-3">🚀 Submit Your Bounty Solution</h3>
+            <div className="text-sm text-gray-300 space-y-2">
+              <p>
+                📌 Paste your entire solution in <strong>Markdown format</strong> below. We'll extract your code (if any), upload
+                it to IPFS, and submit your response.
+              </p>
+
+              <p className="font-medium text-white">Please include:</p>
+              <ul className="list-disc list-inside space-y-1 ml-4">
+                <li>🧠 A clear explanation of your approach</li>
+                <li>
+                  💻 Code blocks inside triple backticks (<code>```</code>) - <em>optional</em>
+                </li>
+                <li>⚙️ Setup or usage instructions (if applicable)</li>
+                <li>
+                  ❌ <strong>Don't upload files or paste links</strong> — we'll handle the uploads automatically.
+                </li>
+              </ul>
+
+              <div className="bg-white/5 border border-white/10 rounded-xl p-4 mt-4">
+                <p className="text-xs text-gray-400 mb-2">✨ Example:</p>
+                <pre className="text-xs text-gray-300 font-mono">
+                  {`## 🧠 Solution for Bounty ID: ${bountyId}
+
+### 🔧 Approach
+We used Chainlink Functions to fetch off-chain weather data and trigger on-chain logic.
+
+### 💻 Code
+\`\`\`javascript
+import { Functions } from "@chainlink/functions-toolkit";
+// ...setup code here
+\`\`\`
+
+### ⚙️ Setup Instructions
+1. Install dependencies: \`npm install\`
+2. Configure environment variables
+3. Deploy the contract`}
+                </pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Main Form */}
+      <motion.div
+        className="bg-white/5 backdrop-blur-md border border-white/20 rounded-3xl p-8"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2, duration: 0.5 }}
+      >
+        {/* Disabled State */}
+        {disabledReason && (
+          <div className="flex items-start gap-3 bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 rounded-2xl p-4 mb-6">
+            <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+            <p className="text-sm">{disabledReason}</p>
+          </div>
+        )}
+
+        {/* Markdown Editor */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <label className="text-lg font-medium flex items-center gap-2">
+              📝 Your Solution (Markdown)
+              <span className="text-red-400">*</span>
+            </label>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setShowPreview(false)}
+                className={`px-4 py-2 text-sm font-medium rounded-xl transition-colors duration-200 flex items-center gap-2 ${
+                  !showPreview ? "bg-[#E23E6B] text-white" : "text-gray-400 hover:bg-white/5"
+                }`}
+                disabled={isFormDisabled}
+              >
+                <FileText className="w-4 h-4" />
+                Write
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowPreview(true)}
+                className={`px-4 py-2 text-sm font-medium rounded-xl transition-colors duration-200 flex items-center gap-2 ${
+                  showPreview ? "bg-[#E23E6B] text-white" : "text-gray-400 hover:bg-white/5"
+                }`}
+                disabled={isFormDisabled}
+              >
+                <Eye className="w-4 h-4" />
+                Preview
+              </button>
+            </div>
+          </div>
+
+          <div className="border border-white/20 rounded-2xl overflow-hidden">
+            {!showPreview ? (
+              <textarea
+                placeholder={`## 🧠 My Solution for "${bounty.name}"
+
+### 🔧 Approach
+I solved this by implementing a React component that...
+
+### 💻 Implementation
+\`\`\`javascript
+import React, { useState, useEffect } from 'react';
+
+function MyComponent() {
+  // Your code here
+  return <div>Hello World</div>;
+}
+
+export default MyComponent;
+\`\`\`
+
+### ⚙️ Setup Instructions
+1. Clone the repository
+2. Install dependencies: \`npm install\`
+3. Run the development server: \`npm start\`
+
+### 📋 Deliverables
+- ✅ Fully functional component
+- ✅ Responsive design
+- ✅ Clean, documented code
+- ✅ Live demo link: https://my-demo.vercel.app`}
+                value={markdownInput}
+                onChange={(e) => setMarkdownInput(e.target.value)}
+                rows={20}
+                className="w-full p-6 bg-transparent text-white placeholder-gray-400 focus:outline-none resize-none font-mono text-sm leading-relaxed"
+                disabled={isFormDisabled}
+                required
+              />
+            ) : (
+              <div className="p-6 min-h-[500px] bg-white/5">
+                {renderMarkdownPreview(markdownInput)}
+
+                {/* Show detected code blocks */}
+                {markdownInput && (
+                  <div className="mt-8 pt-6 border-t border-white/10">
+                    <h4 className="text-sm font-medium text-gray-400 mb-4 flex items-center gap-2">
+                      <Code className="w-4 h-4" />
+                      Detected Code Blocks ({parseMarkdown(markdownInput).codeBlocks.length})
+                    </h4>
+                    <div className="space-y-3">
+                      {parseMarkdown(markdownInput).codeBlocks.map((block, index) => (
+                        <div key={index} className="bg-black/20 border border-white/10 rounded-xl p-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs font-medium text-blue-400">{block.language}</span>
+                            <span className="text-xs text-gray-400">{block.code.split("\n").length} lines</span>
+                          </div>
+                          <pre className="text-xs text-gray-300 font-mono overflow-x-auto">
+                            <code>
+                              {block.code.slice(0, 200)}
+                              {block.code.length > 200 ? "..." : ""}
+                            </code>
+                          </pre>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Submit Button */}
+        <div className="pt-6 border-t border-white/10 mt-8">
+          <motion.button
+            onClick={processSubmission}
+            disabled={isFormDisabled || !markdownInput.trim()}
+            className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-[#E23E6B] to-[#cc4368] text-white font-medium rounded-2xl hover:from-[#cc4368] hover:to-[#E23E6B] transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+            whileHover={!isFormDisabled && markdownInput.trim() ? { scale: 1.02 } : {}}
+            whileTap={!isFormDisabled && markdownInput.trim() ? { scale: 0.98 } : {}}
+          >
+            <Zap className="w-5 h-5" />
+            <span>Submit Solution</span>
+          </motion.button>
+
+          {markdownInput.trim() && (
+            <div className="mt-4 text-center">
+              <p className="text-sm text-gray-400">
+                {parseMarkdown(markdownInput).codeBlocks.length > 0 
+                  ? `We'll automatically extract ${parseMarkdown(markdownInput).codeBlocks.length} code block(s) and upload to IPFS`
+                  : "Your solution will be uploaded to IPFS and submitted to the blockchain"
+                }
+              </p>
+            </div>
+          )}
+        </div>
+      </motion.div>
+    </div>
+  )
+}
+
+export default function SubmitBountyPage() {
+  const params = useParams()
+  const bountyId = params?.id as string
+
+  if (!bountyId || isNaN(Number(bountyId))) {
     return (
       <div className={cn("min-h-screen bg-black text-white py-8 px-4 md:px-6", poppins.className)}>
-        <div className="max-w-4xl mx-auto">
-          {/* Header */}
-          <motion.div
-            className="flex items-center justify-between mb-8"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <div>
-              <h1 className="text-3xl md:text-4xl font-thin mb-2">
-                <AuroraText colors={["#cc4368", "#e6295c", "#ffffff", "#E23E6B"]}>
-                  <span className="text-transparent">Preview Submission</span>
-                </AuroraText>
-              </h1>
-              <p className="text-gray-300/80 text-lg font-light">{bounty.name}</p>
-            </div>
-            <div className="flex gap-3">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center py-12">
+            <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+            <h2 className="text-2xl font-thin mb-2">Invalid Bounty ID</h2>
+            <p className="text-gray-400 mb-6">The bounty ID provided is not valid.</p>
+            <Link href="/dashboard/bounty">
               <motion.button
-                onClick={() => setCurrentStep(SubmissionStep.FORM)}
-                className="flex items-center space-x-2 px-4 py-2 bg-white/10 rounded-xl font-medium border border-white/20"
+                className="px-6 py-3 bg-gradient-to-r from-[#E23E6B] to-[#cc4368] rounded-2xl font-medium hover:from-[#cc4368] hover:to-[#E23E6B] transition-all duration-300"
                 whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
               >
-                <ArrowLeft className="w-4 h-4" />
-                <span>Edit</span>
+                Back to Bounties
               </motion.button>
-              <motion.button
-                onClick={processSubmission}
-                disabled={isFormDisabled}
-                className="flex items-center space-x-2 px-6 py-2 bg-gradient-to-r from-[#E23E6B] to-[#cc4368] rounded-xl font-medium disabled:opacity-50"
-                whileHover={{ scale: 1.05 }}
-              >
-                <Zap className="w-4 h-4" />
-                <span>Submit Solution</span>
-              </motion.button>
-            </div>
-          </motion.div>
-
-          {/* Preview Content */}
-          <div className="bg-white/5 backdrop-blur-md border border-white/20 rounded-3xl p-8">
-            <div className="prose prose-invert prose-lg max-w-none">
-              {generatedMarkdown.split("\n").map((line, i) => {
-                if (line.startsWith("```")) {
-                  // Handle code blocks in preview
-                  const isStart = !line.endsWith("```")
-                  if (isStart) {
-                    return (
-                      <div key={i} className="bg-gray-900 rounded-lg p-4 my-4 font-mono text-sm overflow-x-auto">
-                        <div className="text-gray-400 text-xs mb-2">{line.slice(3) || "code"}</div>
-                      </div>
-                    )
-                  }
-                  return null
-                }
-                if (line.startsWith("# ")) {
-                  return (
-                    <h1 key={i} className="text-3xl font-bold mt-8 mb-4 text-white">
-                      {line.slice(2)}
-                    </h1>
-                  )
-                }
-                if (line.startsWith("## ")) {
-                  return (
-                    <h2 key={i} className="text-2xl font-bold mt-6 mb-3 text-gray-200">
-                      {line.slice(3)}
-                    </h2>
-                  )
-                }
-                if (line.startsWith("### ")) {
-                  return (
-                    <h3 key={i} className="text-xl font-semibold mt-4 mb-2 text-gray-300">
-                      {line.slice(4)}
-                    </h3>
-                  )
-                }
-                if (line.startsWith("- ")) {
-                  return (
-                    <li key={i} className="ml-4 my-1 text-gray-300">
-                      {line.slice(2)}
-                    </li>
-                  )
-                }
-                if (line.match(/^\d+\. /)) {
-                  return (
-                    <li key={i} className="ml-4 my-1 text-gray-300 list-decimal">
-                      {line.replace(/^\d+\. /, "")}
-                    </li>
-                  )
-                }
-                if (line.includes("](")) {
-                  // Handle links
-                  const linkRegex = /\[([^\]]+)\]$$([^)]+)$$/g
-                  const parts = line.split(linkRegex)
-                  return (
-                    <p key={i} className="mb-3 text-gray-300 leading-relaxed">
-                      {parts.map((part, j) => {
-                        if (j % 3 === 1) {
-                          return (
-                            <a
-                              key={j}
-                              href={parts[j + 1]}
-                              className="text-blue-400 hover:text-blue-300 underline"
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              {part}
-                            </a>
-                          )
-                        } else if (j % 3 === 2) {
-                          return null
-                        }
-                        return part
-                      })}
-                    </p>
-                  )
-                }
-                return line ? (
-                  <p key={i} className="mb-3 text-gray-300 leading-relaxed">
-                    {line}
-                  </p>
-                ) : (
-                  <br key={i} />
-                )
-              })}
-            </div>
+            </Link>
           </div>
         </div>
       </div>
     )
   }
 
-  // Main form
   return (
     <div className={cn("min-h-screen bg-black text-white py-8 px-4 md:px-6", poppins.className)}>
-      <div className="max-w-5xl mx-auto">
-        {/* Header */}
-        <motion.div
-          className="flex items-center justify-between mb-8"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <div>
-            <h1 className="text-3xl md:text-4xl font-thin mb-2">
-              <AuroraText colors={["#cc4368", "#e6295c", "#ffffff", "#E23E6B"]}>
-                <span className="text-transparent">Submit Solution</span>
-              </AuroraText>
-            </h1>
-            <p className="text-gray-300/80 text-lg font-light">{bounty.name}</p>
-          </div>
-          <div className="flex gap-3">
-            <Link href={`/dashboard/bounty/${bountyId}`}>
-              <motion.button
-                className="flex items-center space-x-2 px-4 py-2 bg-white/10 rounded-xl font-medium border border-white/20"
-                whileHover={{ scale: 1.05 }}
-              >
-                <ArrowLeft className="w-4 h-4" />
-                <span>Back</span>
-              </motion.button>
-            </Link>
-            <motion.button
-              onClick={() => setCurrentStep(SubmissionStep.PREVIEW)}
-              disabled={isFormDisabled || !formData.title || !formData.description}
-              className="flex items-center space-x-2 px-6 py-2 bg-gradient-to-r from-[#E23E6B] to-[#cc4368] rounded-xl font-medium disabled:opacity-50"
-              whileHover={{ scale: 1.05 }}
-            >
-              <Eye className="w-4 h-4" />
-              <span>Preview</span>
-            </motion.button>
-          </div>
-        </motion.div>
-
-        {/* Disabled state warning */}
-        {isFormDisabled && (
-          <motion.div
-            className="bg-red-500/10 border border-red-500/20 rounded-2xl p-4 mb-6"
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <div className="flex items-center gap-2 text-red-400">
-              <AlertCircle className="w-5 h-5" />
-              <span>{disabledReason}</span>
-            </div>
-          </motion.div>
-        )}
-
-        {/* Form */}
-        <div className="space-y-8">
-          {/* Project Information */}
-          <motion.div
-            className="bg-white/5 backdrop-blur-md border border-white/20 rounded-3xl p-8"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-          >
-            <h2 className="text-2xl font-thin mb-6 flex items-center gap-2">
-              <FileText className="w-6 h-6 text-[#E23E6B]" />
-              Project Information
-            </h2>
-
-            <div className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium mb-2">Project Title *</label>
-                <input
-                  type="text"
-                  value={formData.title}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
-                  placeholder="Enter your project title"
-                  className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:border-[#E23E6B] transition-colors duration-200"
-                  disabled={isFormDisabled}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">Project Description *</label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
-                  placeholder="Describe what your project does and how it solves the bounty requirements"
-                  rows={4}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:border-[#E23E6B] transition-colors duration-200 resize-none"
-                  disabled={isFormDisabled}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">Technical Approach</label>
-                <textarea
-                  value={formData.approach}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, approach: e.target.value }))}
-                  placeholder="Explain your technical approach, architecture decisions, and implementation strategy"
-                  rows={3}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:border-[#E23E6B] transition-colors duration-200 resize-none"
-                  disabled={isFormDisabled}
-                />
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Team Members */}
-          <motion.div
-            className="bg-white/5 backdrop-blur-md border border-white/20 rounded-3xl p-8"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-thin flex items-center gap-2">
-                <Users className="w-6 h-6 text-[#E23E6B]" />
-                Team Members
-              </h2>
-              <motion.button
-                onClick={addTeamMember}
-                disabled={isFormDisabled}
-                className="flex items-center gap-2 px-4 py-2 bg-[#E23E6B]/20 hover:bg-[#E23E6B]/30 text-[#E23E6B] rounded-xl transition-colors duration-200 disabled:opacity-50"
-                whileHover={{ scale: 1.05 }}
-              >
-                <Plus className="w-4 h-4" />
-                Add Member
-              </motion.button>
-            </div>
-
-            <div className="space-y-4">
-              {formData.teamMembers.map((member, index) => (
-                <div key={index} className="bg-white/5 rounded-2xl p-4 border border-white/10">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-medium">Team Member {index + 1}</h3>
-                    {formData.teamMembers.length > 1 && (
-                      <motion.button
-                        onClick={() => removeTeamMember(index)}
-                        disabled={isFormDisabled}
-                        className="text-red-400 hover:text-red-300 transition-colors duration-200 disabled:opacity-50"
-                        whileHover={{ scale: 1.1 }}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </motion.button>
-                    )}
-                  </div>
-
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Name</label>
-                      <input
-                        type="text"
-                        value={member.name}
-                        onChange={(e) => updateTeamMember(index, "name", e.target.value)}
-                        placeholder="Full name"
-                        className="w-full px-3 py-2 bg-white/5 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-[#E23E6B] transition-colors duration-200"
-                        disabled={isFormDisabled}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Role</label>
-                      <input
-                        type="text"
-                        value={member.role}
-                        onChange={(e) => updateTeamMember(index, "role", e.target.value)}
-                        placeholder="e.g., Frontend Developer, Designer"
-                        className="w-full px-3 py-2 bg-white/5 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-[#E23E6B] transition-colors duration-200"
-                        disabled={isFormDisabled}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-2">GitHub Username</label>
-                      <input
-                        type="text"
-                        value={member.github || ""}
-                        onChange={(e) => updateTeamMember(index, "github", e.target.value)}
-                        placeholder="github-username"
-                        className="w-full px-3 py-2 bg-white/5 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-[#E23E6B] transition-colors duration-200"
-                        disabled={isFormDisabled}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Wallet Address</label>
-                      <input
-                        type="text"
-                        value={member.wallet || ""}
-                        onChange={(e) => updateTeamMember(index, "wallet", e.target.value)}
-                        placeholder="0x..."
-                        className="w-full px-3 py-2 bg-white/5 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-[#E23E6B] transition-colors duration-200"
-                        disabled={isFormDisabled}
-                      />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-
-          {/* Code Implementation */}
-          <motion.div
-            className="bg-white/5 backdrop-blur-md border border-white/20 rounded-3xl p-8"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-          >
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-thin flex items-center gap-2">
-                <Code className="w-6 h-6 text-[#E23E6B]" />
-                Code Implementation
-              </h2>
-              <motion.button
-                onClick={addCodeFile}
-                disabled={isFormDisabled}
-                className="flex items-center gap-2 px-4 py-2 bg-[#E23E6B]/20 hover:bg-[#E23E6B]/30 text-[#E23E6B] rounded-xl transition-colors duration-200 disabled:opacity-50"
-                whileHover={{ scale: 1.05 }}
-              >
-                <Plus className="w-4 h-4" />
-                Add Code File
-              </motion.button>
-            </div>
-
-            <div className="space-y-6">
-              {formData.codeFiles.map((file, index) => (
-                <div key={index} className="bg-white/5 rounded-2xl p-4 border border-white/10">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-medium">Code File {index + 1}</h3>
-                    {formData.codeFiles.length > 1 && (
-                      <motion.button
-                        onClick={() => removeCodeFile(index)}
-                        disabled={isFormDisabled}
-                        className="text-red-400 hover:text-red-300 transition-colors duration-200 disabled:opacity-50"
-                        whileHover={{ scale: 1.1 }}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </motion.button>
-                    )}
-                  </div>
-
-                  <div className="space-y-4">
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium mb-2">Filename</label>
-                        <input
-                          type="text"
-                          value={file.filename}
-                          onChange={(e) => updateCodeFile(index, "filename", e.target.value)}
-                          placeholder="e.g., main.js, App.tsx, contract.sol"
-                          className="w-full px-3 py-2 bg-white/5 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-[#E23E6B] transition-colors duration-200"
-                          disabled={isFormDisabled}
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-2">Language</label>
-                        <select
-                          value={file.language}
-                          onChange={(e) => updateCodeFile(index, "language", e.target.value)}
-                          className="w-full px-3 py-2 bg-white/5 border border-white/20 rounded-xl text-white focus:outline-none focus:border-[#E23E6B] transition-colors duration-200"
-                          disabled={isFormDisabled}
-                        >
-                          <option value="javascript">JavaScript</option>
-                          <option value="typescript">TypeScript</option>
-                          <option value="python">Python</option>
-                          <option value="solidity">Solidity</option>
-                          <option value="rust">Rust</option>
-                          <option value="go">Go</option>
-                          <option value="java">Java</option>
-                          <option value="cpp">C++</option>
-                          <option value="html">HTML</option>
-                          <option value="css">CSS</option>
-                          <option value="json">JSON</option>
-                          <option value="yaml">YAML</option>
-                          <option value="bash">Bash</option>
-                          <option value="sql">SQL</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Description (Optional)</label>
-                      <input
-                        type="text"
-                        value={file.description || ""}
-                        onChange={(e) => updateCodeFile(index, "description", e.target.value)}
-                        placeholder="Brief description of what this code does"
-                        className="w-full px-3 py-2 bg-white/5 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-[#E23E6B] transition-colors duration-200"
-                        disabled={isFormDisabled}
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Code</label>
-                      <textarea
-                        value={file.code}
-                        onChange={(e) => updateCodeFile(index, "code", e.target.value)}
-                        placeholder="Paste your code here..."
-                        rows={8}
-                        className="w-full px-3 py-2 bg-white/5 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-[#E23E6B] transition-colors duration-200 resize-none font-mono text-sm"
-                        disabled={isFormDisabled}
-                      />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-
-          {/* Project Links */}
-          <motion.div
-            className="bg-white/5 backdrop-blur-md border border-white/20 rounded-3xl p-8"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-          >
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-thin flex items-center gap-2">
-                <LinkIcon className="w-6 h-6 text-[#E23E6B]" />
-                Project Links
-              </h2>
-              <motion.button
-                onClick={addProjectLink}
-                disabled={isFormDisabled}
-                className="flex items-center gap-2 px-4 py-2 bg-[#E23E6B]/20 hover:bg-[#E23E6B]/30 text-[#E23E6B] rounded-xl transition-colors duration-200 disabled:opacity-50"
-                whileHover={{ scale: 1.05 }}
-              >
-                <Plus className="w-4 h-4" />
-                Add Link
-              </motion.button>
-            </div>
-
-            <div className="space-y-4">
-              {formData.projectLinks.map((link, index) => (
-                <div key={index} className="bg-white/5 rounded-2xl p-4 border border-white/10">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-medium">Project Link {index + 1}</h3>
-                    <motion.button
-                      onClick={() => removeProjectLink(index)}
-                      disabled={isFormDisabled}
-                      className="text-red-400 hover:text-red-300 transition-colors duration-200 disabled:opacity-50"
-                      whileHover={{ scale: 1.1 }}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </motion.button>
-                  </div>
-
-                  <div className="grid md:grid-cols-3 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Type</label>
-                      <select
-                        value={link.type}
-                        onChange={(e) => updateProjectLink(index, "type", e.target.value)}
-                        className="w-full px-3 py-2 bg-white/5 border border-white/20 rounded-xl text-white focus:outline-none focus:border-[#E23E6B] transition-colors duration-200"
-                        disabled={isFormDisabled}
-                      >
-                        <option value="demo">Live Demo</option>
-                        <option value="repository">Repository</option>
-                        <option value="documentation">Documentation</option>
-                        <option value="video">Video</option>
-                        <option value="other">Other</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-2">URL</label>
-                      <input
-                        type="url"
-                        value={link.url}
-                        onChange={(e) => updateProjectLink(index, "url", e.target.value)}
-                        placeholder="https://..."
-                        className="w-full px-3 py-2 bg-white/5 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-[#E23E6B] transition-colors duration-200"
-                        disabled={isFormDisabled}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Description</label>
-                      <input
-                        type="text"
-                        value={link.description}
-                        onChange={(e) => updateProjectLink(index, "description", e.target.value)}
-                        placeholder="Brief description"
-                        className="w-full px-3 py-2 bg-white/5 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-[#E23E6B] transition-colors duration-200"
-                        disabled={isFormDisabled}
-                      />
-                    </div>
-                  </div>
-                </div>
-              ))}
-
-              {formData.projectLinks.length === 0 && (
-                <p className="text-gray-400 text-center py-4">
-                  No project links added yet. Click "Add Link" to get started.
-                </p>
-              )}
-            </div>
-          </motion.div>
-
-          {/* Installation & Usage */}
-          <motion.div
-            className="bg-white/5 backdrop-blur-md border border-white/20 rounded-3xl p-8"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-          >
-            <h2 className="text-2xl font-thin mb-6 flex items-center gap-2">
-              <Terminal className="w-6 h-6 text-[#E23E6B]" />
-              Setup & Usage
-            </h2>
-
-            <div className="space-y-6">
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <label className="block text-sm font-medium">Installation Steps</label>
-                  <motion.button
-                    onClick={addInstallationStep}
-                    disabled={isFormDisabled}
-                    className="flex items-center gap-2 px-3 py-1 bg-[#E23E6B]/20 hover:bg-[#E23E6B]/30 text-[#E23E6B] rounded-lg transition-colors duration-200 disabled:opacity-50 text-sm"
-                    whileHover={{ scale: 1.05 }}
-                  >
-                    <Plus className="w-3 h-3" />
-                    Add Step
-                  </motion.button>
-                </div>
-
-                <div className="space-y-2">
-                  {formData.installationSteps.map((step, index) => (
-                    <div key={index} className="flex gap-2">
-                      <span className="text-gray-400 text-sm mt-3 min-w-[20px]">{index + 1}.</span>
-                      <input
-                        type="text"
-                        value={step}
-                        onChange={(e) => updateInstallationStep(index, e.target.value)}
-                        placeholder="e.g., npm install, git clone, etc."
-                        className="flex-1 px-3 py-2 bg-white/5 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-[#E23E6B] transition-colors duration-200"
-                        disabled={isFormDisabled}
-                      />
-                      {formData.installationSteps.length > 1 && (
-                        <motion.button
-                          onClick={() => removeInstallationStep(index)}
-                          disabled={isFormDisabled}
-                          className="text-red-400 hover:text-red-300 transition-colors duration-200 disabled:opacity-50 px-2"
-                          whileHover={{ scale: 1.1 }}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </motion.button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">Usage Instructions</label>
-                <textarea
-                  value={formData.usageInstructions}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, usageInstructions: e.target.value }))}
-                  placeholder="Explain how to use your project, key features, and any important notes"
-                  rows={4}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:border-[#E23E6B] transition-colors duration-200 resize-none"
-                  disabled={isFormDisabled}
-                />
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Additional Information */}
-          <motion.div
-            className="bg-white/5 backdrop-blur-md border border-white/20 rounded-3xl p-8"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6 }}
-          >
-            <h2 className="text-2xl font-thin mb-6 flex items-center gap-2">
-              <Sparkles className="w-6 h-6 text-[#E23E6B]" />
-              Additional Information
-            </h2>
-
-            <div className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium mb-2">Challenges & Solutions</label>
-                <textarea
-                  value={formData.challenges}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, challenges: e.target.value }))}
-                  placeholder="Describe any challenges you faced and how you solved them"
-                  rows={3}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:border-[#E23E6B] transition-colors duration-200 resize-none"
-                  disabled={isFormDisabled}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">Future Enhancements</label>
-                <textarea
-                  value={formData.futurePlans}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, futurePlans: e.target.value }))}
-                  placeholder="What would you improve or add if you had more time?"
-                  rows={3}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:border-[#E23E6B] transition-colors duration-200 resize-none"
-                  disabled={isFormDisabled}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">Additional Notes</label>
-                <textarea
-                  value={formData.additionalNotes}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, additionalNotes: e.target.value }))}
-                  placeholder="Any other information you'd like to share"
-                  rows={3}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:border-[#E23E6B] transition-colors duration-200 resize-none"
-                  disabled={isFormDisabled}
-                />
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      </div>
+      <SubmitBountyComponent bountyId={bountyId} />
     </div>
   )
 }

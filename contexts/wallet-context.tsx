@@ -4,7 +4,7 @@ import type React from "react"
 import { createContext, useContext, useState, useEffect } from "react"
 import { useAccount, useConnect, useDisconnect } from "wagmi"
 import { motion, AnimatePresence } from "motion/react"
-
+import { useRouter } from "next/navigation"
 
 interface WalletContextType {
   isConnected: boolean
@@ -14,6 +14,8 @@ interface WalletContextType {
   disconnect: () => void
   showConnectionAnimation: boolean
   setShowConnectionAnimation: (show: boolean) => void
+  shouldRedirectToDashboard: boolean
+  setShouldRedirectToDashboard: (should: boolean) => void
 }
 
 const WalletContext = createContext<WalletContextType | undefined>(undefined)
@@ -22,8 +24,10 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   const { address, isConnected } = useAccount()
   const { connect: wagmiConnect, connectors, isPending } = useConnect()
   const { disconnect: wagmiDisconnect } = useDisconnect()
+  const router = useRouter()
   const [showConnectionAnimation, setShowConnectionAnimation] = useState(false)
   const [hasShownAnimation, setHasShownAnimation] = useState(false)
+  const [shouldRedirectToDashboard, setShouldRedirectToDashboard] = useState(false)
 
   useEffect(() => {
     // Only show animation when wallet connects for the first time in this session
@@ -45,16 +49,31 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     }
   }, [isConnected])
 
+  // Handle redirect to dashboard when wallet connects
+  useEffect(() => {
+    if (isConnected && address && shouldRedirectToDashboard) {
+      // Check if we're not already on a dashboard page
+      const currentPath = window.location.pathname
+      if (!currentPath.startsWith('/dashboard')) {
+        router.push('/dashboard')
+      }
+      setShouldRedirectToDashboard(false)
+    }
+  }, [isConnected, address, shouldRedirectToDashboard, router])
+
   const connect = (connectorId: string) => {
     const connector = connectors.find((c: any) => c.id === connectorId)
     if (connector) {
       wagmiConnect({ connector })
+      // Set redirect flag when connecting
+      setShouldRedirectToDashboard(true)
     }
   }
 
   const disconnect = () => {
     wagmiDisconnect()
     setShowConnectionAnimation(false)
+    setShouldRedirectToDashboard(false)
   }
 
   return (
@@ -67,10 +86,11 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
         disconnect,
         showConnectionAnimation,
         setShowConnectionAnimation,
+        shouldRedirectToDashboard,
+        setShouldRedirectToDashboard,
       }}
     >
       {children}
-      <WalletConnectionAnimation />
     </WalletContext.Provider>
   )
 }
@@ -81,34 +101,4 @@ export function useWallet() {
     throw new Error("useWallet must be used within a WalletProvider")
   }
   return context
-}
-
-function WalletConnectionAnimation() {
-  const { showConnectionAnimation } = useWallet()
-
-  return (
-    <AnimatePresence>
-      {showConnectionAnimation && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8, y: 50 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.8, y: -50 }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
-          className="fixed top-20 right-4 z-[9999] bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-3 rounded-2xl shadow-2xl border border-green-400/30"
-        >
-          <div className="flex items-center space-x-3">
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
-              className="w-6 h-6 border-2 border-white border-t-transparent rounded-full"
-            />
-            <div>
-              <div className="font-semibold">Wallet Connected!</div>
-              <div className="text-sm opacity-90">Ready to interact with dApps</div>
-            </div>
-          </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
-  )
 }

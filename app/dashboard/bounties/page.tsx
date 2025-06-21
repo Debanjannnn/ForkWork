@@ -17,6 +17,9 @@ import {
   Loader2,
   ChevronRight,
   ArrowLeft,
+  Eye,
+  CheckCircle,
+  XCircle,
 } from "lucide-react"
 import Link from "next/link"
 import { useReadContract } from "wagmi"
@@ -24,6 +27,8 @@ import { formatUnits } from "viem"
 import { BOUNTY_CONTRACT_ADDRESS, BOUNTY_ABI } from "@/lib/contracts"
 import { getFromPinata, type PinataMetadata } from "@/lib/pinata"
 import { useWallet } from "@/contexts/wallet-context"
+import { WalletDisplay } from "@/components/ui/wallet-display"
+import { WalletConnectModal } from "@/components/wallet-connect-module"
 
 const poppins = Poppins({
   weight: ["400", "500", "600", "700"],
@@ -42,12 +47,12 @@ interface BountyCardProps {
 }
 
 function BountyCard({ bountyId, index }: BountyCardProps) {
-  const [ipfsMetadata, setIpfsMetadata] = useState<PinataMetadata | null>(null)
-  const [isLoadingIpfs, setIsLoadingIpfs] = useState(false)
+  const [metadata, setMetadata] = useState<PinataMetadata | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
 
   const cardVariants: Variants = {
     initial: { opacity: 0, y: 20 },
-    animate: {
+    animate: (index: number) => ({
       opacity: 1,
       y: 0,
       transition: {
@@ -55,7 +60,7 @@ function BountyCard({ bountyId, index }: BountyCardProps) {
         duration: 0.5,
         ease: "easeOut",
       },
-    },
+    }),
     hover: {
       y: -8,
       scale: 1.02,
@@ -63,7 +68,7 @@ function BountyCard({ bountyId, index }: BountyCardProps) {
     },
   }
 
-  const { data: bounty, isLoading } = useReadContract({
+  const { data: bounty } = useReadContract({
     address: BOUNTY_CONTRACT_ADDRESS,
     abi: BOUNTY_ABI,
     functionName: "getBounty",
@@ -71,16 +76,13 @@ function BountyCard({ bountyId, index }: BountyCardProps) {
   })
 
   const fetchIpfsMetadata = async (description: string) => {
-    if (!description.startsWith("ipfs://")) return
-
-    setIsLoadingIpfs(true)
     try {
       const metadata = await getFromPinata(description)
-      setIpfsMetadata(metadata)
+      setMetadata(metadata)
     } catch (error) {
-      console.error("IPFS fetch error:", error)
+      console.error("Failed to fetch IPFS metadata:", error)
     } finally {
-      setIsLoadingIpfs(false)
+      setIsLoading(false)
     }
   }
 
@@ -97,31 +99,14 @@ function BountyCard({ bountyId, index }: BountyCardProps) {
   const getStatusColor = (status: number) => {
     switch (status) {
       case 0:
-        return "from-green-500 to-green-700"
+        return "text-green-400"
       case 1:
-        return "from-blue-500 to-blue-700"
+        return "text-blue-400"
       case 2:
-        return "from-red-500 to-red-700"
+        return "text-red-400"
       default:
-        return "from-gray-500 to-gray-700"
+        return "text-gray-400"
     }
-  }
-
-  const isDeadlinePassed = bounty && Date.now() > Number(bounty.deadline) * 1000
-
-  if (isLoading) {
-    return (
-      <motion.div
-        className="bg-white/5 backdrop-blur-md border border-white/20 rounded-3xl p-6 group overflow-hidden relative"
-        variants={cardVariants}
-        initial="initial"
-        animate="animate"
-      >
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 animate-spin text-[#E23E6B]" />
-        </div>
-      </motion.div>
-    )
   }
 
   if (!bounty || bounty.creator === "0x0000000000000000000000000000000000000000") {
@@ -130,96 +115,58 @@ function BountyCard({ bountyId, index }: BountyCardProps) {
 
   return (
     <motion.div
-      className="bg-white/5 backdrop-blur-md border border-white/20 rounded-3xl p-6 group overflow-hidden relative cursor-pointer"
+      className="bg-white/5 backdrop-blur-md border border-white/20 rounded-3xl p-6 group overflow-hidden relative"
       variants={cardVariants}
+      custom={index}
       initial="initial"
       animate="animate"
       whileHover="hover"
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-white to-[#E23E6B] opacity-0 group-hover:opacity-10 transition-opacity duration-300 rounded-3xl"></div>
-
+      <div className="absolute inset-0 bg-gradient-to-br from-white to-[#E23E6B] opacity-0 group-hover:opacity-5 transition-opacity duration-300 rounded-3xl"></div>
       <div className="relative z-10">
         {/* Header */}
         <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="text-2xl">{categoryEmojis[bounty.category]}</div>
-            <div>
-              <h3 className={cn("text-lg font-medium line-clamp-1", poppins.className)}>
-                {ipfsMetadata?.name || bounty.name}
-              </h3>
-              <div className="flex items-center gap-2 text-sm text-gray-400">
-                <span>#{bounty.id.toString()}</span>
-                <span>•</span>
-                <span>{categories[bounty.category]}</span>
-              </div>
-            </div>
+          <div className="flex items-center gap-2">
+            <span className="text-2xl">{categoryEmojis[Number(bounty.category)]}</span>
+            <span className="text-sm text-gray-400">{categories[Number(bounty.category)]}</span>
           </div>
-          <div
-            className={`px-3 py-1 bg-gradient-to-r ${getStatusColor(bounty.status)} rounded-full text-white text-xs font-medium`}
-          >
-            {statusLabels[bounty.status]}
-          </div>
-        </div>
-
-        {/* Description Preview */}
-        <div className="mb-4">
-          {isLoadingIpfs ? (
-            <div className="flex items-center gap-2 text-gray-400 text-sm">
-              <Loader2 className="w-4 h-4 animate-spin" />
-              <span>Loading description...</span>
-            </div>
-          ) : (
-            <p className="text-gray-300 text-sm line-clamp-2 leading-relaxed">
-              {ipfsMetadata?.description.split("\n")[0] || bounty.description}
-            </p>
-          )}
-        </div>
-
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <div className="bg-white/5 rounded-2xl p-3 text-center">
-            <DollarSign className="w-4 h-4 text-[#E23E6B] mx-auto mb-1" />
-            <div className="text-sm font-medium">{formatUnits(bounty.totalReward, 6)}</div>
-            <div className="text-xs text-gray-400">USDT</div>
-          </div>
-          <div className="bg-white/5 rounded-2xl p-3 text-center">
-            <Target className="w-4 h-4 text-[#E23E6B] mx-auto mb-1" />
-            <div className="text-sm font-medium">{bounty.submissionCount.toString()}</div>
-            <div className="text-xs text-gray-400">Submissions</div>
-          </div>
-        </div>
-
-        {/* Deadline */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2 text-sm text-gray-400">
-            <Calendar className="w-4 h-4" />
-            <span>{formatDate(bounty.deadline)}</span>
-          </div>
-          {isDeadlinePassed && bounty.status === 0 && (
-            <div className="px-2 py-1 bg-red-500/20 text-red-400 rounded text-xs">Expired</div>
-          )}
-        </div>
-
-        {/* Creator */}
-        <div className="flex items-center gap-2 mb-4 text-sm text-gray-400">
-          <User className="w-4 h-4" />
-          <span className="font-mono">
-            {bounty.creator.slice(0, 6)}...{bounty.creator.slice(-4)}
+          <span className={`text-xs font-medium px-2 py-1 rounded-full ${getStatusColor(Number(bounty.status))} bg-opacity-20`}>
+            {statusLabels[Number(bounty.status)]}
           </span>
         </div>
 
+        {/* Title */}
+        <h3 className="font-semibold text-lg mb-2 line-clamp-2">
+          {metadata?.name || `Bounty #${bountyId}`}
+        </h3>
+
+        {/* Description */}
+        <p className="text-gray-300 text-sm mb-4 line-clamp-3">
+          {metadata?.description || "Loading description..."}
+        </p>
+
+        {/* Stats */}
+        <div className="grid grid-cols-2 gap-4 mb-4">
+          <div className="flex items-center gap-2 text-sm">
+            <DollarSign className="w-4 h-4 text-green-400" />
+            <span className="text-white font-medium">{formatUnits(bounty.totalReward, 6)} USDT</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm">
+            <Calendar className="w-4 h-4 text-blue-400" />
+            <span className="text-gray-300">{formatDate(bounty.deadline)}</span>
+          </div>
+        </div>
+
         {/* Action Button */}
-        <Link href={`/dashboard/bounties/${bounty.id}`}>
-          <motion.div
-            className="flex items-center justify-between p-3 bg-white/5 rounded-2xl border border-white/10 hover:border-[#E23E6B]/50 transition-all duration-300 group/button"
-            whileHover={{ x: 5 }}
-            transition={{ type: "spring", stiffness: 400, damping: 10 }}
+        <Link href={`/dashboard/bounties/${bountyId}`}>
+          <motion.button
+            className="w-full py-2 bg-gradient-to-r from-[#E23E6B] to-[#cc4368] text-white font-medium rounded-xl hover:from-[#cc4368] hover:to-[#E23E6B] transition-all duration-300"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
           >
-            <span className="text-gray-300 group-hover/button:text-white transition-colors duration-300 font-medium text-sm">
-              View Details
-            </span>
-            <ChevronRight className="w-4 h-4 text-[#E23E6B] group-hover/button:text-white transition-colors duration-300" />
-          </motion.div>
+            <Eye className="w-4 h-4 inline mr-2" />
+            View Details
+          </motion.button>
         </Link>
       </div>
     </motion.div>
@@ -228,10 +175,24 @@ function BountyCard({ bountyId, index }: BountyCardProps) {
 
 function Bounties() {
   const { address, isConnected } = useWallet()
-  const [searchTerm, setSearchTerm] = useState("")
-  const [selectedCategory, setSelectedCategory] = useState<string>("all")
-  const [selectedStatus, setSelectedStatus] = useState<string>("all")
   const [bountyIds, setBountyIds] = useState<number[]>([])
+  const [searchTerm, setSearchTerm] = useState("")
+  const [selectedCategory, setSelectedCategory] = useState("all")
+  const [selectedStatus, setSelectedStatus] = useState("all")
+  const [showWalletModal, setShowWalletModal] = useState(false)
+
+  const { data: nextBountyId } = useReadContract({
+    address: BOUNTY_CONTRACT_ADDRESS,
+    abi: BOUNTY_ABI,
+    functionName: "nextBountyId",
+  })
+
+  useEffect(() => {
+    if (nextBountyId !== undefined) {
+      const ids = Array.from({ length: Number(nextBountyId) - 1 }, (_, i) => i + 1)
+      setBountyIds(ids.reverse()) // Show newest first
+    }
+  }, [nextBountyId])
 
   const cardVariants: Variants = {
     initial: { opacity: 0, y: 20 },
@@ -245,56 +206,17 @@ function Bounties() {
       },
     }),
     hover: {
-      y: -4,
-      scale: 1.01,
+      y: -8,
+      scale: 1.02,
       transition: { duration: 0.3, ease: "easeInOut" },
     },
   }
 
-  // Get next bounty ID to determine how many bounties exist
-  const { data: nextBountyId } = useReadContract({
-    address: BOUNTY_CONTRACT_ADDRESS,
-    abi: BOUNTY_ABI,
-    functionName: "nextBountyId",
-  })
-
-  useEffect(() => {
-    if (nextBountyId) {
-      const ids = []
-      const totalBounties = Number(nextBountyId) - 1
-      // Show latest bounties first
-      for (let i = totalBounties; i >= 1; i--) {
-        ids.push(i)
-      }
-      setBountyIds(ids)
-    }
-  }, [nextBountyId])
-
   const statsData = [
-    {
-      label: "Total Bounties",
-      value: nextBountyId ? (Number(nextBountyId) - 1).toString() : "0",
-      icon: Trophy,
-      color: "from-[#E23E6B] to-[#cc4368]",
-    },
-    {
-      label: "Active Bounties",
-      value: "12",
-      icon: Target,
-      color: "from-green-500 to-green-700",
-    },
-    {
-      label: "Total Rewards",
-      value: "$2.4K",
-      icon: DollarSign,
-      color: "from-blue-500 to-blue-700",
-    },
-    {
-      label: "Participants",
-      value: "156",
-      icon: User,
-      color: "from-purple-500 to-purple-700",
-    },
+    { label: "Total Bounties", value: nextBountyId ? (Number(nextBountyId) - 1).toString() : "0", icon: Trophy, color: "from-[#E23E6B] to-[#cc4368]" },
+    { label: "Active Bounties", value: "8", icon: CheckCircle, color: "from-green-500 to-green-700" },
+    { label: "Total Rewards", value: "$12.5K", icon: DollarSign, color: "from-yellow-500 to-yellow-700" },
+    { label: "Participants", value: "156", icon: User, color: "from-blue-500 to-blue-700" },
   ]
 
   return (
@@ -302,7 +224,7 @@ function Bounties() {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <motion.div
-          className="flex flex-col lg:flex-row lg:items-center justify-between mb-12"
+          className="flex flex-col lg:flex-row items-start lg:items-center justify-between mb-12"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
@@ -329,6 +251,7 @@ function Bounties() {
           </div>
 
           <div className="flex items-center gap-4 mt-6 lg:mt-0">
+            <WalletDisplay />
             <Link href="/dashboard">
               <motion.button
                 className="flex items-center space-x-3 px-6 py-3 bg-white/10 border border-white/20 text-white font-medium rounded-2xl hover:bg-white/20 transition-all duration-300 shadow-lg hover:shadow-xl"
@@ -493,6 +416,7 @@ function Bounties() {
                 Connect your wallet to create bounties and participate in the ecosystem.
               </p>
               <motion.button
+                onClick={() => setShowWalletModal(true)}
                 className="px-6 py-3 bg-gradient-to-r from-[#E23E6B] to-[#cc4368] rounded-2xl font-medium hover:from-[#cc4368] hover:to-[#E23E6B] transition-all duration-300"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -503,6 +427,8 @@ function Bounties() {
           </motion.div>
         )}
       </div>
+
+      <WalletConnectModal isOpen={showWalletModal} onClose={() => setShowWalletModal(false)} />
     </div>
   )
 }

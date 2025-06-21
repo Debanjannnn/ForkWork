@@ -19,6 +19,7 @@ import {
   Briefcase
 } from "lucide-react"
 import { AuroraText } from "@/components/magicui/aurora-text"
+import { WalletDisplay } from "@/components/ui/wallet-display"
 
 const poppins = Poppins({
   weight: ["400", "500", "600", "700"],
@@ -137,11 +138,12 @@ export default function JobDetails() {
       <div className="max-w-4xl mx-auto">
         {/* Back Button */}
         <motion.div
-          className="flex justify-end mb-8"
+          className="flex justify-between items-center mb-8"
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5 }}
         >
+          <WalletDisplay />
           <motion.button
             onClick={handleBackClick}
             className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-[#E23E6B] to-[#cc4368] text-white font-medium rounded-2xl hover:from-[#cc4368] hover:to-[#E23E6B] transition-all duration-300 group backdrop-blur-md border border-white/20 shadow-lg"
