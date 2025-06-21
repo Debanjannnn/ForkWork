@@ -584,7 +584,7 @@ export default function PostBounty() {
                   <Plus className="w-4 h-4 mr-2 inline" />
                   Create Another Bounty
                 </motion.button>
-                <Link href="/dashboard/bounty">
+                <Link href="/dashboard/bounties">
                   <motion.button
                     className="px-8 py-3 bg-white/10 text-white font-medium rounded-2xl hover:bg-white/20 transition-all duration-300 border border-white/20"
                     whileHover={{ scale: 1.05 }}

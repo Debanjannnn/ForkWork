@@ -8,18 +8,15 @@ import { AuroraText } from "@/components/magicui/aurora-text"
 import {
   Plus,
   Search,
-  Calendar,
   DollarSign,
   User,
-  Target,
   Trophy,
   AlertCircle,
-  Loader2,
   ChevronRight,
   ArrowLeft,
   Eye,
   CheckCircle,
-  XCircle,
+  Clock,
 } from "lucide-react"
 import Link from "next/link"
 import { useReadContract } from "wagmi"
@@ -62,9 +59,9 @@ function BountyCard({ bountyId, index }: BountyCardProps) {
       },
     }),
     hover: {
-      y: -8,
-      scale: 1.02,
-      transition: { duration: 0.3, ease: "easeInOut" },
+      y: -12,
+      scale: 1.03,
+      transition: { duration: 0.4, ease: "easeInOut" },
     },
   }
 
@@ -99,73 +96,124 @@ function BountyCard({ bountyId, index }: BountyCardProps) {
   const getStatusColor = (status: number) => {
     switch (status) {
       case 0:
-        return "text-green-400"
+        return "text-green-400 bg-green-400/10 border-green-400/20"
       case 1:
-        return "text-blue-400"
+        return "text-blue-400 bg-blue-400/10 border-blue-400/20"
       case 2:
-        return "text-red-400"
+        return "text-red-400 bg-red-400/10 border-red-400/20"
       default:
-        return "text-gray-400"
+        return "text-gray-400 bg-gray-400/10 border-gray-400/20"
     }
+  }
+
+  const getDaysLeft = (timestamp: bigint) => {
+    const now = new Date()
+    const deadline = new Date(Number(timestamp) * 1000)
+    const diffTime = deadline.getTime() - now.getTime()
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    return diffDays
   }
 
   if (!bounty || bounty.creator === "0x0000000000000000000000000000000000000000") {
     return null
   }
 
+  const daysLeft = getDaysLeft(bounty.deadline)
+
   return (
     <motion.div
-      className="bg-white/5 backdrop-blur-md border border-white/20 rounded-3xl p-6 group overflow-hidden relative"
+      className="bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-8 group overflow-hidden relative hover:border-white/20 transition-all duration-500"
       variants={cardVariants}
       custom={index}
       initial="initial"
       animate="animate"
       whileHover="hover"
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-white to-[#E23E6B] opacity-0 group-hover:opacity-5 transition-opacity duration-300 rounded-3xl"></div>
+      {/* Gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-[#E23E6B]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl"></div>
+
+      {/* Glow effect */}
+      <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-[#E23E6B]/20 to-[#cc4368]/20 opacity-0 group-hover:opacity-20 blur-xl transition-opacity duration-500"></div>
+
       <div className="relative z-10">
-        {/* Header */}
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl">{categoryEmojis[Number(bounty.category)]}</span>
-            <span className="text-sm text-gray-400">{categories[Number(bounty.category)]}</span>
+        {/* Header with category and status */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-gradient-to-br from-white/10 to-white/5 rounded-2xl flex items-center justify-center border border-white/10 group-hover:border-white/20 transition-colors duration-300">
+              <span className="text-2xl">{categoryEmojis[Number(bounty.category)]}</span>
+            </div>
+            <div>
+              <span className="text-sm font-medium text-white/90">{categories[Number(bounty.category)]}</span>
+              <div className="text-xs text-gray-400 mt-0.5">#{bountyId}</div>
+            </div>
           </div>
-          <span className={`text-xs font-medium px-2 py-1 rounded-full ${getStatusColor(Number(bounty.status))} bg-opacity-20`}>
+          <div
+            className={`text-xs font-medium px-3 py-1.5 rounded-full border ${getStatusColor(Number(bounty.status))}`}
+          >
             {statusLabels[Number(bounty.status)]}
-          </span>
+          </div>
         </div>
 
         {/* Title */}
-        <h3 className="font-semibold text-lg mb-2 line-clamp-2">
+        <h3 className="font-semibold text-xl mb-3 line-clamp-2 text-white group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-white group-hover:to-[#E23E6B] transition-all duration-300">
           {metadata?.name || `Bounty #${bountyId}`}
         </h3>
 
         {/* Description */}
-        <p className="text-gray-300 text-sm mb-4 line-clamp-3">
+        <p className="text-gray-300 text-sm mb-6 line-clamp-3 leading-relaxed">
           {metadata?.description || "Loading description..."}
         </p>
 
-        {/* Stats */}
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <div className="flex items-center gap-2 text-sm">
-            <DollarSign className="w-4 h-4 text-green-400" />
-            <span className="text-white font-medium">{formatUnits(bounty.totalReward, 6)} USDT</span>
+        {/* Enhanced Stats Grid */}
+        <div className="grid grid-cols-2 gap-4 mb-6">
+          <div className="bg-white/5 rounded-2xl p-4 border border-white/10 group-hover:border-white/20 transition-colors duration-300">
+            <div className="flex items-center gap-2 mb-1">
+              <DollarSign className="w-4 h-4 text-green-400" />
+              <span className="text-xs text-gray-400 uppercase tracking-wide">Reward</span>
+            </div>
+            <div className="text-white font-semibold text-lg">{formatUnits(bounty.totalReward, 6)} USDT</div>
           </div>
-          <div className="flex items-center gap-2 text-sm">
-            <Calendar className="w-4 h-4 text-blue-400" />
-            <span className="text-gray-300">{formatDate(bounty.deadline)}</span>
+
+          <div className="bg-white/5 rounded-2xl p-4 border border-white/10 group-hover:border-white/20 transition-colors duration-300">
+            <div className="flex items-center gap-2 mb-1">
+              <Clock className="w-4 h-4 text-blue-400" />
+              <span className="text-xs text-gray-400 uppercase tracking-wide">Deadline</span>
+            </div>
+            <div className="text-white font-semibold text-sm">{formatDate(bounty.deadline)}</div>
+            <div
+              className={`text-xs mt-1 ${daysLeft > 7 ? "text-green-400" : daysLeft > 3 ? "text-yellow-400" : "text-red-400"}`}
+            >
+              {daysLeft > 0 ? `${daysLeft} days left` : "Expired"}
+            </div>
           </div>
         </div>
 
-        {/* Action Button */}
+        {/* Creator info */}
+        <div className="flex items-center gap-2 mb-6 p-3 bg-white/5 rounded-2xl border border-white/10">
+          <div className="w-8 h-8 bg-gradient-to-br from-[#E23E6B] to-[#cc4368] rounded-full flex items-center justify-center">
+            <User className="w-4 h-4 text-white" />
+          </div>
+          <div>
+            <div className="text-xs text-gray-400">Created by</div>
+            <div className="text-sm text-white font-medium">
+              {`${bounty.creator.slice(0, 6)}...${bounty.creator.slice(-4)}`}
+            </div>
+          </div>
+        </div>
+
+        {/* Enhanced Action Button */}
         <Link href={`/dashboard/bounties/${bountyId}`}>
           <motion.button
-            className="w-full py-2 bg-gradient-to-r from-[#E23E6B] to-[#cc4368] text-white font-medium rounded-xl hover:from-[#cc4368] hover:to-[#E23E6B] transition-all duration-300"
+            className="w-full py-4 bg-gradient-to-r from-[#E23E6B] to-[#cc4368] text-white font-medium rounded-2xl hover:from-[#cc4368] hover:to-[#E23E6B] transition-all duration-300 shadow-lg hover:shadow-xl group/btn relative overflow-hidden"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
-            <Eye className="w-4 h-4 inline mr-2" />
-            View Details
+            <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300"></div>
+            <div className="relative flex items-center justify-center gap-2">
+              <Eye className="w-4 h-4" />
+              <span>View Details</span>
+              <ChevronRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform duration-300" />
+            </div>
           </motion.button>
         </Link>
       </div>
@@ -213,7 +261,12 @@ function Bounties() {
   }
 
   const statsData = [
-    { label: "Total Bounties", value: nextBountyId ? (Number(nextBountyId) - 1).toString() : "0", icon: Trophy, color: "from-[#E23E6B] to-[#cc4368]" },
+    {
+      label: "Total Bounties",
+      value: nextBountyId ? (Number(nextBountyId) - 1).toString() : "0",
+      icon: Trophy,
+      color: "from-[#E23E6B] to-[#cc4368]",
+    },
     { label: "Active Bounties", value: "8", icon: CheckCircle, color: "from-green-500 to-green-700" },
     { label: "Total Rewards", value: "$12.5K", icon: DollarSign, color: "from-yellow-500 to-yellow-700" },
     { label: "Participants", value: "156", icon: User, color: "from-blue-500 to-blue-700" },
@@ -369,7 +422,7 @@ function Bounties() {
         {/* Bounties Grid */}
         {bountyIds.length > 0 ? (
           <motion.div
-            className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
+            className="grid md:grid-cols-2 lg:grid-cols-3 gap-8"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.6, duration: 0.5 }}
@@ -433,4 +486,4 @@ function Bounties() {
   )
 }
 
-export default Bounties;
+export default Bounties
