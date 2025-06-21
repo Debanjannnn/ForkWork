@@ -103,8 +103,10 @@ function SubmitBountyComponent({ bountyId }: { bountyId: string }) {
     address: BOUNTY_CONTRACT_ADDRESS,
     abi: BOUNTY_ABI,
     functionName: "hasUserSubmitted",
-    args: [BigInt(bountyId), address!],
-    enabled: isConnected && !!address,
+    args: [BigInt(bountyId), address as `0x${string}`],
+    query: {
+      enabled: isConnected && !!address,
+    },
   })
 
   const { data: hash, error: writeError, isPending, writeContract } = useWriteContract()
@@ -304,7 +306,7 @@ function SubmitBountyComponent({ bountyId }: { bountyId: string }) {
       toast.error("Submission Failed", {
         description: writeError.message.includes("User rejected the request")
           ? "You rejected the transaction in your wallet."
-          : writeError.shortMessage || "An unknown error occurred.",
+          : writeError.message || "An unknown error occurred.",
       })
       setCurrentStep(SubmissionStep.FORM)
     }
@@ -375,7 +377,7 @@ function SubmitBountyComponent({ bountyId }: { bountyId: string }) {
         <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
         <h2 className="text-2xl font-thin mb-2">Bounty Not Found</h2>
         <p className="text-gray-400 mb-6">The bounty you're trying to submit to doesn't exist.</p>
-        <Link href="/dashboard/bounty">
+        <Link href="/dashboard/bounties">
           <motion.button className="px-6 py-3 bg-gradient-to-r from-[#E23E6B] to-[#cc4368] rounded-2xl font-medium">
             Back to Bounties
           </motion.button>
@@ -556,7 +558,7 @@ function SubmitBountyComponent({ bountyId }: { bountyId: string }) {
           </motion.h1>
           <motion.p className="text-gray-300/80 text-lg font-light">{bounty.name}</motion.p>
         </div>
-        <Link href={`/dashboard/bounty/${bountyId}`}>
+        <Link href={`/dashboard/bounties/${bountyId}`}>
           <motion.button
             className="flex items-center space-x-3 px-6 py-3 bg-gradient-to-r from-[#E23E6B] to-[#cc4368] text-white font-medium rounded-2xl hover:from-[#cc4368] hover:to-[#E23E6B] transition-all duration-300 shadow-md"
             whileHover={{ scale: 1.05 }}

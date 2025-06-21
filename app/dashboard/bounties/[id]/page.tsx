@@ -243,7 +243,7 @@ function SingleBounty({ bountyId }: { bountyId: string }) {
             </motion.p>
           </div>
 
-          <Link href="/dashboard/bounty">
+          <Link href="/dashboard/bounties">
             <motion.button
               className="flex items-center space-x-3 px-6 py-3 bg-gradient-to-r from-[#E23E6B] to-[#cc4368] text-white font-medium rounded-2xl hover:from-[#cc4368] hover:to-[#E23E6B] transition-all duration-300 shadow-lg hover:shadow-xl"
               whileHover={{ scale: 1.05 }}
@@ -488,6 +488,7 @@ function SingleBounty({ bountyId }: { bountyId: string }) {
                 <div className="absolute inset-0 bg-gradient-to-br from-white to-[#E23E6B] opacity-0 group-hover:opacity-10 transition-opacity duration-300 rounded-3xl"></div>
                 <div className="relative z-10">
                   <h3 className={cn("text-lg font-thin mb-4", poppins.className)}>Take Action</h3>
+                  <Link href={`/dashboard/bounties/${bountyId}/submit`}>
                   <motion.button
                     className="w-full px-6 py-3 bg-gradient-to-r from-[#E23E6B] to-[#cc4368] text-white font-medium rounded-2xl hover:from-[#cc4368] hover:to-[#E23E6B] transition-all duration-300 shadow-lg hover:shadow-xl"
                     whileHover={{ scale: 1.02 }}
@@ -495,6 +496,7 @@ function SingleBounty({ bountyId }: { bountyId: string }) {
                   >
                     Submit to Bounty
                   </motion.button>
+                  </Link>
                 </div>
               </motion.div>
             )}

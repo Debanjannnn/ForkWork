@@ -16,6 +16,7 @@ import {
   AlertCircle,
   Loader2,
   ChevronRight,
+  ArrowLeft,
 } from "lucide-react"
 import Link from "next/link"
 import { useReadContract } from "wagmi"
@@ -327,16 +328,29 @@ function Bounties() {
             </motion.p>
           </div>
 
-          <Link href="/dashboard/bounties/post">
-            <motion.button
-              className="flex items-center space-x-3 px-8 py-4 bg-gradient-to-r from-[#E23E6B] to-[#cc4368] text-white font-medium rounded-3xl hover:from-[#cc4368] hover:to-[#E23E6B] transition-all duration-300 shadow-lg hover:shadow-xl mt-6 lg:mt-0"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <Plus className="w-5 h-5" />
-              <span>Create Bounty</span>
-            </motion.button>
-          </Link>
+          <div className="flex items-center gap-4 mt-6 lg:mt-0">
+            <Link href="/dashboard">
+              <motion.button
+                className="flex items-center space-x-3 px-6 py-3 bg-white/10 border border-white/20 text-white font-medium rounded-2xl hover:bg-white/20 transition-all duration-300 shadow-lg hover:shadow-xl"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>Back to Dashboard</span>
+              </motion.button>
+            </Link>
+
+            <Link href="/dashboard/bounties/post">
+              <motion.button
+                className="flex items-center space-x-3 px-8 py-4 bg-gradient-to-r from-[#E23E6B] to-[#cc4368] text-white font-medium rounded-3xl hover:from-[#cc4368] hover:to-[#E23E6B] transition-all duration-300 shadow-lg hover:shadow-xl"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <Plus className="w-5 h-5" />
+                <span>Create Bounty</span>
+              </motion.button>
+            </Link>
+          </div>
         </motion.div>
 
         {/* Stats Grid */}

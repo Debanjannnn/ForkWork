@@ -3,10 +3,10 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import axios from "axios"
-import { motion, Variants } from "framer-motion"
+import { motion, type Variants } from "framer-motion"
 import { Poppins } from "next/font/google"
 import { cn } from "@/lib/utils"
-import { ExternalLink, MapPin, Calendar, Building2, Loader2, ArrowLeft } from "lucide-react"
+import { ExternalLink, MapPin, Calendar, Building2, Loader2, ArrowLeft, Eye } from "lucide-react"
 import { AuroraText } from "@/components/magicui/aurora-text"
 
 const poppins = Poppins({
@@ -38,7 +38,7 @@ export default function Web3Jobs() {
   useEffect(() => {
     async function fetchJobs() {
       try {
-        const response = await axios.get("https://web3.career/api/v1?token=EBgibcypTuCrRCYAgZCZARKTZoGs9kmx")
+        const response = await axios.get("/api/jobs")
         const jobList = response.data[2] // assuming job array is at index 2
         setJobs(jobList)
       } catch (error) {
@@ -53,6 +53,16 @@ export default function Web3Jobs() {
 
   const handleBackClick = () => {
     router.back()
+  }
+
+  const handleViewDetails = (job: Job) => {
+    // Navigate to job details page
+    router.push(`/dashboard/jobs/${job.id}`)
+  }
+
+  const handleApplyNow = (job: Job) => {
+    // Navigate to apply page with job data
+    router.push(`/dashboard/jobs/apply/${job.id}`)
   }
 
   // Animation variants
@@ -239,19 +249,26 @@ export default function Web3Jobs() {
               )}
 
               {/* Apply Button */}
-              <div className="mt-auto pt-4">
-                <motion.a
-                  href={job.apply_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
+              <div className="mt-auto pt-4 space-y-3">
+                <motion.button
+                  onClick={() => handleViewDetails(job)}
+                  className="inline-flex items-center justify-center w-full px-6 py-3 bg-white/10 border border-white/20 text-white font-medium rounded-2xl hover:bg-white/20 transition-all duration-300 group/button"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <Eye className="w-4 h-4 mr-2 group-hover/button:scale-110 transition-transform duration-300" />
+                  <span>View Details</span>
+                </motion.button>
+                
+                <motion.button
+                  onClick={() => handleApplyNow(job)}
                   className="inline-flex items-center justify-center w-full px-6 py-3 bg-gradient-to-r from-[#E23E6B] to-[#cc4368] text-white font-medium rounded-2xl hover:from-[#cc4368] hover:to-[#E23E6B] transition-all duration-300 group/button"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  <span className="mr-2"
-                   onClick={() => router.push(job.apply_url)}>Apply Now</span>
+                  <span className="mr-2">Apply Now</span>
                   <ExternalLink className="w-4 h-4 group-hover/button:translate-x-1 transition-transform duration-300" />
-                </motion.a>
+                </motion.button>
               </div>
             </motion.div>
           ))}

@@ -159,7 +159,7 @@ export default function BentoGrid() {
       {/* Grid layout */}
       <div className="grid grid-cols-12 gap-4">
         {/* Feature 1 - Bounty Hiring - Spans 4 columns */}
-        <Link href="/dashboard/bounty" className="col-span-12 md:col-span-4">
+        <Link href="/dashboard/bounties" className="col-span-12 md:col-span-4">
           <motion.div
             className="bg-white/5 backdrop-blur-md border border-white/20 rounded-3xl p-8 flex flex-col h-full relative group overflow-hidden shadow-lg cursor-pointer"
             initial="initial"

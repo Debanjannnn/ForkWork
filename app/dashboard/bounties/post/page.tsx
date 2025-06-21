@@ -123,6 +123,7 @@ export default function PostBounty() {
   const [ipfsUri, setIpfsUri] = useState("")
   const [uploadProgress, setUploadProgress] = useState(0)
   const [error, setError] = useState<string>("")
+  const [isConvertingToMarkdown, setIsConvertingToMarkdown] = useState(false)
 
   const cardVariants: Variants = {
     initial: { opacity: 0, y: 20 },
@@ -420,6 +421,42 @@ export default function PostBounty() {
     )
   }
 
+  const convertToMarkdown = async () => {
+    if (!formData.description.trim()) {
+      setError("Please enter some text to convert to markdown")
+      return
+    }
+
+    setIsConvertingToMarkdown(true)
+    setError("")
+
+    try {
+      const response = await fetch('/api/convert-markdown', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text: formData.description }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to convert to markdown')
+      }
+
+      const data = await response.json()
+      if (data.markdown) {
+        setFormData({ ...formData, description: data.markdown })
+      } else {
+        setError("Failed to convert to markdown: No response from AI")
+      }
+    } catch (error) {
+      setError(`Failed to convert to markdown: ${error instanceof Error ? error.message : "Unknown error"}`)
+    } finally {
+      setIsConvertingToMarkdown(false)
+    }
+  }
+
   if (currentStep === CreateStep.SUCCESS) {
     return (
       <div className={cn("min-h-screen bg-black text-white py-8 px-4 md:px-6", poppins.className)}>
@@ -594,7 +631,7 @@ export default function PostBounty() {
             </motion.p>
           </div>
 
-          <Link href="/dashboard/bounty">
+          <Link href="/dashboard/bounties">
             <motion.button
               className="flex items-center space-x-3 px-6 py-3 bg-gradient-to-r from-[#E23E6B] to-[#cc4368] text-white font-medium rounded-2xl hover:from-[#cc4368] hover:to-[#E23E6B] transition-all duration-300 shadow-lg hover:shadow-xl"
               whileHover={{ scale: 1.05 }}
@@ -857,14 +894,36 @@ export default function PostBounty() {
                       </button>
                     </div>
                     {!showPreview ? (
-                      <textarea
-                        placeholder="## Task Overview&#10;Build a React application to visualize DeFi staking data...&#10;&#10;### Requirements&#10;- [ ] Responsive design&#10;- [ ] Real-time data integration&#10;- [ ] Clean UI/UX&#10;&#10;### Deliverables&#10;- Source code repository&#10;- Live demo link&#10;- Documentation"
-                        value={formData.description}
-                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                        rows={12}
-                        className="w-full p-4 bg-transparent text-white placeholder-gray-400 focus:outline-none resize-none font-mono text-sm"
-                        required
-                      />
+                      <div className="relative">
+                        <textarea
+                          placeholder="## Task Overview&#10;Build a React application to visualize DeFi staking data...&#10;&#10;### Requirements&#10;- [ ] Responsive design&#10;- [ ] Real-time data integration&#10;- [ ] Clean UI/UX&#10;&#10;### Deliverables&#10;- Source code repository&#10;- Live demo link&#10;- Documentation"
+                          value={formData.description}
+                          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                          rows={12}
+                          className="w-full p-4 bg-transparent text-white placeholder-gray-400 focus:outline-none resize-none font-mono text-sm"
+                          required
+                        />
+                        <div className="absolute top-2 right-2">
+                          <button
+                            type="button"
+                            onClick={convertToMarkdown}
+                            disabled={isConvertingToMarkdown || !formData.description.trim()}
+                            className="px-3 py-1.5 bg-gradient-to-r from-blue-500 to-blue-700 text-white text-xs font-medium rounded-xl hover:from-blue-600 hover:to-blue-800 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                          >
+                            {isConvertingToMarkdown ? (
+                              <>
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                                Converting...
+                              </>
+                            ) : (
+                              <>
+                                <Zap className="w-3 h-3" />
+                                Convert to Markdown
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </div>
                     ) : (
                       <div className="p-4 min-h-[300px] bg-white/5">{renderMarkdownPreview(formData.description)}</div>
                     )}
@@ -874,7 +933,7 @@ export default function PostBounty() {
                       <Info className="w-4 h-4 mt-0.5 flex-shrink-0" />
                       <span>
                         <strong>Pro tip:</strong> This description will be stored as JSON metadata on IPFS via Pinata.
-                        Use markdown formatting for better readability.
+                        Use markdown formatting for better readability. You can also use the "Convert to Markdown" button to automatically format your text.
                       </span>
                     </p>
                   </div>
