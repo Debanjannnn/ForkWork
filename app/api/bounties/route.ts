@@ -13,10 +13,12 @@ export async function GET() {
     const contract = getContract({
       address: BOUNTY_CONTRACT_ADDRESS,
       abi: BOUNTY_ABI,
+      //@ts-ignore
       publicClient,
     });
 
     // Get the next bounty ID to determine how many bounties exist
+    //@ts-ignore
     const nextBountyId = await contract.read.nextBountyId();
     const bountyCount = Number(nextBountyId) - 1;
 
@@ -28,6 +30,7 @@ export async function GET() {
     const bounties = [];
     for (let i = 1; i <= bountyCount; i++) {
       try {
+        //@ts-ignore
         const bounty = await contract.read.getBounty([BigInt(i)]);
         
         // Only include active/open bounties

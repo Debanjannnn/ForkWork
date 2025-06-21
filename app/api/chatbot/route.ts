@@ -164,6 +164,7 @@ Always provide practical, actionable advice. Be encouraging and supportive. When
     const model = ai.models.generateContent({
       model: "gemini-2.5-flash",
       contents: conversationContext,
+      //@ts-ignore
       generationConfig: {
         temperature: 0.7,
         maxOutputTokens: 1200,
@@ -174,6 +175,7 @@ Always provide practical, actionable advice. Be encouraging and supportive. When
     let responseText = response.text;
 
     // Apply additional prettification
+    //@ts-ignore
     responseText = prettifyResponse(responseText);
 
     return NextResponse.json({

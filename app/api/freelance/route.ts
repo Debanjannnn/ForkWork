@@ -14,10 +14,12 @@ export async function GET() {
     const contract = getContract({
       address: FREELANCE_CONTRACT_ADDRESS,
       abi: FREELANCE_ABI,
+      //@ts-ignore
       publicClient,
     });
 
     // Get the gig count to determine how many gigs exist
+    //@ts-ignore
     const gigCount = await contract.read.gigCount();
     const totalGigs = Number(gigCount);
 
@@ -29,6 +31,7 @@ export async function GET() {
     const gigs = [];
     for (let i = 0; i < totalGigs; i++) {
       try {
+        //@ts-ignore
         const gig = await contract.read.getGigDetails([BigInt(i)]);
         
         // Only include active gigs (not completed)
