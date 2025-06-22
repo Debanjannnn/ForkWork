@@ -16,6 +16,7 @@ A revolutionary Web3 platform that connects talented freelancers with clients th
 ## ✨ Features
 
 ### 🎯 **Bounty System**
+Contract Address: 0x0caE75a45201304d6b45541BCeF12bd3ee787e28
 - **Competitive Bounties**: Post tasks and let multiple freelancers compete
 - **USDT Payments**: Secure payments using USDT stablecoin
 - **Dynamic Prize Distribution**: Flexible reward allocation based on quality
@@ -141,16 +142,23 @@ A revolutionary Web3 platform that connects talented freelancers with clients th
 ## 🔧 Smart Contracts
 
 ### Bounty Contract (`Bounty.sol`)
+- Contract Address: [0x0caE75a45201304d6b45541BCeF12bd3ee787e28](https://sepolia.etherscan.io/address/0x0caE75a45201304d6b45541BCeF12bd3ee787e28)
 - Manages competitive bounty competitions
 - Handles USDT payments and prize distribution
 - Implements deadline enforcement and penalty systems
 - Supports multiple categories and submission tracking
 
 ### Freelance Contract (`Freelance.sol`)
+- Contract Addres: [0xfa80583757AaE278b0849B815A3A19bd5285d311](https://sepolia.etherscan.io/address/0xfa80583757AaE278b0849B815A3A19bd5285d311)
 - Escrow system for freelance projects
 - Staking mechanism for freelancer commitment
 - Proposal management and selection process
 - Automated deadline handling and fund release
+
+### USDT Token (Mock)
+- Token Address: [0x82d5125995AD54D9ff7f856F4a2D2273B00d8b61](https://sepolia.etherscan.io/address/0x82d5125995AD54D9ff7f856F4a2D2273B00d8b61)
+- ERC20 stablecoin used for all payments on the platform
+  
 
 ## 🌟 Key Benefits
 
